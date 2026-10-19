@@ -1,7 +1,7 @@
 // Offline support. Pages load from the cache instantly and refresh in the background,
 // so an update you push shows up the second time you open the app.
 // Change VERSION whenever you publish new files, so old caches are cleared.
-const VERSION = "casino-sims-v1";
+const VERSION = "casino-sims-v2";
 const FILES = [
   "./",
   "./index.html",

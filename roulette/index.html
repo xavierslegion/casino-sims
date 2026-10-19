@@ -118,7 +118,12 @@ button,select,input{font:inherit;color:inherit}
 .cell span{font:600 19px/1 var(--f-display);color:#fff;pointer-events:none}
 .cell.red{background:var(--red)} .cell.black{background:var(--black)} .cell.green{background:var(--zero)}
 .cell.blank{background:var(--felt-deep)}
+/* numbers your bets cover: a brass ring and a small brass mark, so the cell still reads red or black */
+.cell.covered{box-shadow:inset 0 0 0 2px var(--brass)}
+.cell.covered::before{content:"";position:absolute;left:4px;bottom:4px;width:0;height:0;border-style:solid;border-width:8px 0 0 8px;border-color:transparent transparent transparent var(--brass);pointer-events:none}
 .cell.hl{box-shadow:inset 0 0 0 3px var(--brass);filter:brightness(1.22)}
+.coverage{margin:-4px 0 0;font:600 12px/1.3 var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:var(--brass);min-height:1.3em}
+.coverage span{color:var(--muted)}
 .cell.zero span{font-size:22px}
 .ob{background:transparent;border-top:0;border-left:0;cursor:pointer;padding:0;
   font:600 13px/1 var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
@@ -141,6 +146,7 @@ button,select,input{font:inherit;color:inherit}
   box-shadow:0 2px 3px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.25)}
 .c1{--chip:#efebdf;--chip-edge:#2e5b9a;color:#17202e}
 .c5{--chip:#bd2530;--chip-edge:#f2ebd9}
+.c10{--chip:#1f4f9c;--chip-edge:#f2ebd9}
 .c25{--chip:#1d7a44;--chip-edge:#f2ebd9}
 .c100{--chip:#1c1c1c;--chip-edge:#f2ebd9}
 .c500{--chip:#5a2b82;--chip-edge:#f0c94e}
@@ -240,8 +246,16 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 }
 /* take back mode, phone bar */
 button{touch-action:manipulation}
-.board.removing{outline:2px dashed var(--loss);outline-offset:12px}
-#btnTakeBack[aria-pressed="true"]{border-color:var(--loss);color:var(--loss)}
+/* dragging chips */
+.board{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.drag-src .chip{opacity:.35}
+body.dragging,body.dragging *{cursor:grabbing!important}
+.drag-ghost{position:fixed;left:0;top:0;width:36px;height:36px;margin:-18px 0 0 -18px;z-index:60;pointer-events:none;font-size:11px;
+  box-shadow:0 8px 18px rgba(0,0,0,.6), 0 0 0 2px var(--brass)}
+.drag-ghost.remove{box-shadow:0 8px 18px rgba(0,0,0,.6), 0 0 0 3px var(--loss);opacity:.85}
+.drag-ghost[data-label]:not([data-label=""])::after{content:attr(data-label);position:absolute;top:44px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  padding:4px 8px;border-radius:4px;background:var(--page);border:1px solid var(--line-soft);font:600 11px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.drag-ghost.remove::after{color:var(--loss)!important;border-color:var(--loss)!important}
 .mbar{display:none}
 .hint-phone{display:none}
 
@@ -323,8 +337,9 @@ button{touch-action:manipulation}
 
     <section class="board-col" aria-label="Betting layout">
       <div class="board-scroll"><div class="board" id="board"></div></div>
-      <p class="hint hint-phone">Tap a number for a straight-up bet. Tap the line between two numbers for a split, where four meet for a corner, the left edge of a row for a street, and the left edge between two rows for a six line. Trios and the top line sit along the line under 0 and 00. To take a chip back, turn on Take back mode and tap the bet.</p>
-      <p class="hint hint-desk">Click a number for a straight-up bet. Click the line between two numbers for a split, where four meet for a corner, the bottom edge of a column for a street, and the bottom edge between two columns for a six line. Trios (0/1/2, 0/00/2, 00/2/3) sit where the zeros meet the numbers. To take a chip back, right-click the bet or turn on Take back mode and tap it.</p>
+      <p class="coverage" id="coverage" aria-live="polite"></p>
+      <p class="hint hint-phone">Tap a number for a straight-up bet. Tap the line between two numbers for a split, where four meet for a corner, the left edge of a row for a street, and the left edge between two rows for a six line. Trios and the top line sit along the line under 0 and 00. To move a bet, press and hold its chips, then drag them to another spot. Drag them off the table to take them back.</p>
+      <p class="hint hint-desk">Click a number for a straight-up bet. Click the line between two numbers for a split, where four meet for a corner, the bottom edge of a column for a street, and the bottom edge between two columns for a six line. Trios (0/1/2, 0/00/2, 00/2/3) sit where the zeros meet the numbers. Drag a stack to another spot to move it, or off the table to take it back. Right-click a bet to take back one chip.</p>
       <div class="rack">
         <div class="chips" id="chips" role="radiogroup" aria-label="Chip value"></div>
         <form class="custom" id="customForm">
@@ -345,7 +360,6 @@ button{touch-action:manipulation}
         <button class="btn" id="btnClear" type="button">Clear</button>
         <button class="btn" id="btnRebet" type="button">Rebet</button>
         <button class="btn" id="btnDouble" type="button">Double</button>
-        <button class="btn" id="btnTakeBack" type="button" aria-pressed="false">Take back mode</button>
         <label class="toggle" for="quick"><input type="checkbox" id="quick"> Quick spin</label>
       </div>
       <div class="saved">
@@ -451,7 +465,7 @@ const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 // American wheel pocket order, clockwise from 0. 37 stands for 00.
 const ORDER = [0,28,9,26,30,11,7,20,32,17,5,22,34,15,3,24,36,13,1,37,27,10,25,29,12,8,19,31,18,6,21,33,16,4,23,35,14,2];
 const SEG = TAU / 38;
-const DENOMS = [1,5,25,100,500,1000];
+const DENOMS = [1,5,10,25,100,500,1000];
 const MINS = [1,2,5,10,15,25,50,100];
 const KEY = "double-zero-roulette-v1";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -463,7 +477,7 @@ const money = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-U
 const signed = v => (v > 0 ? "+" : "") + money(v);
 const pnClass = v => v > 0 ? "pos" : v < 0 ? "neg" : "";
 const shortAmt = v => v >= 1000 ? (+(v / 1000).toFixed(v % 1000 ? 1 : 0)) + "k" : String(v);
-const denomClass = v => v >= 1000 ? "c1000" : v >= 500 ? "c500" : v >= 100 ? "c100" : v >= 25 ? "c25" : v >= 5 ? "c5" : "c1";
+const denomClass = v => v >= 1000 ? "c1000" : v >= 500 ? "c500" : v >= 100 ? "c100" : v >= 25 ? "c25" : v >= 10 ? "c10" : v >= 5 ? "c5" : "c1";
 const sum = b => Object.values(b).reduce((a, x) => a + x, 0);
 function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
 
@@ -655,16 +669,35 @@ function takeBack(key) {
   status(`Took back ${money(amt)} from ${betName(key)}.`);
   afterBetChange();
 }
-function undo() {
-  const u = S.undo.pop(); if (!u) return;
+// Undo entries are one {key, amt} change, or a list of them for a move.
+function reverseStep(u) {
   if (u.amt > 0) {
     S.bets[u.key] -= u.amt; if (S.bets[u.key] <= 0) delete S.bets[u.key];
-    S.session.balance += u.amt;
-  } else {
-    if (-u.amt > S.session.balance) { status("Not enough in your bankroll to put that chip back.", "warn"); return; }
-    S.bets[u.key] = (S.bets[u.key] || 0) - u.amt; S.session.balance += u.amt;
+    S.session.balance += u.amt; return true;
   }
-  status("Undid last chip.");
+  if (-u.amt > S.session.balance) return false;
+  S.bets[u.key] = (S.bets[u.key] || 0) - u.amt; S.session.balance += u.amt; return true;
+}
+function undo() {
+  const u = S.undo.pop(); if (!u) return;
+  for (const step of Array.isArray(u) ? u.slice().reverse() : [u]) {
+    if (!reverseStep(step)) { status("Not enough in your bankroll to put that chip back.", "warn"); afterBetChange(); return; }
+  }
+  status(Array.isArray(u) ? "Moved it back." : "Undid last chip.");
+  afterBetChange();
+}
+function removeBet(key) {
+  const amt = S.bets[key]; if (!amt) return;
+  delete S.bets[key]; S.session.balance += amt;
+  S.undo.push({key, amt: -amt});
+  status(`Took back ${betName(key)}: ${money(amt)} to your bankroll.`);
+  afterBetChange();
+}
+function moveBet(from, to) {
+  const amt = S.bets[from]; if (!amt || from === to) return;
+  delete S.bets[from]; S.bets[to] = (S.bets[to] || 0) + amt;
+  S.undo.push([{key: from, amt: -amt}, {key: to, amt}]);
+  status(`Moved ${money(amt)} from ${betName(from)} to ${betName(to)}.`);
   afterBetChange();
 }
 function clearBets() {
@@ -840,6 +873,15 @@ function drawWheel() {
     ctx.save(); ctx.translate(c + Math.cos(mid) * R * 0.755, c + Math.sin(mid) * R * 0.755); ctx.rotate(mid + Math.PI / 2);
     ctx.fillStyle = "#f2ebd9"; ctx.fillText(lab(n), 0, 0); ctx.restore();
   }
+  // Brass marks on the ball track beside every pocket your bets cover.
+  if (covered.size) {
+    ctx.strokeStyle = "#e4bf6e"; ctx.lineWidth = Math.max(2, R * 0.035); ctx.lineCap = "butt";
+    for (let i = 0; i < 38; i++) {
+      if (!covered.has(ORDER[i])) continue;
+      const mid = S.rot + i * SEG - Math.PI / 2;
+      ctx.beginPath(); ctx.arc(c, c, R * 0.86, mid - SEG * 0.36, mid + SEG * 0.36); ctx.stroke();
+    }
+  }
   ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = R * 0.012; ctx.beginPath(); ctx.arc(c, c, R * 0.70, 0, TAU); ctx.stroke();
   ctx.strokeStyle = "rgba(214,174,90,.8)"; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.arc(c, c, ro, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(c, c, ri, 0, TAU); ctx.stroke();
@@ -915,6 +957,18 @@ function renderBoardChips() {
   document.querySelectorAll(".dolly").forEach(d => d.remove());
   const last = S.session.spins[S.session.spins.length - 1];
   if (last) cellEl[last.n].appendChild(el("span", "dolly"));
+  renderCoverage();
+}
+// Numbers that win something on the next spin, shown on the layout and the wheel.
+let covered = new Set();
+function renderCoverage() {
+  covered = new Set();
+  for (const k in S.bets) for (const n of BETS[k].numbers) covered.add(n);
+  for (const n in cellEl) cellEl[n].classList.toggle("covered", covered.has(+n));
+  $("coverage").innerHTML = covered.size
+    ? `Covering ${covered.size} of 38 numbers <span>· ${(covered.size / 38 * 100).toFixed(1)}% chance to hit at least one bet</span>`
+    : "";
+  if (!S.spinning) drawWheel();
 }
 function renderRack() {
   const box = $("chips"); box.innerHTML = "";
@@ -1100,14 +1154,72 @@ function startSession(bank, min) {
 }
 
 /* ---------- events ---------- */
-let takeBackMode = false;
-board.addEventListener("click", e => { const b = e.target.closest("[data-bet]"); if (!b) return; if (takeBackMode) takeBack(b.dataset.bet); else placeBet(b.dataset.bet, S.chip); });
-$("btnTakeBack").addEventListener("click", e => {
-  takeBackMode = !takeBackMode;
-  e.currentTarget.setAttribute("aria-pressed", String(takeBackMode));
-  board.classList.toggle("removing", takeBackMode);
-  status(takeBackMode ? `Take back mode is on. Tap a bet to take back one ${money(S.chip)} chip.` : "Take back mode is off. Tap the layout to add chips.");
+board.addEventListener("click", e => { if (drag.suppressClick) return; const b = e.target.closest("[data-bet]"); if (b) placeBet(b.dataset.bet, S.chip); });
+
+/* ---------- drag chips ---------- */
+// Drag a stack onto another bet to move it, or off the table to take it back.
+// Mouse: press and drag. Touch: press and hold, then drag, so a quick swipe still scrolls the page.
+const drag = {key: null, active: false, ghost: null, target: null, x: 0, y: 0, timer: 0, suppressClick: false};
+function dragTargetAt(x, y) {
+  const at = document.elementFromPoint(x, y);
+  if (!at) return {kind: "remove"};
+  const b = at.closest("#board [data-bet]");
+  if (b) return {kind: "bet", key: b.dataset.bet};
+  return at.closest(".board-scroll") ? {kind: "none"} : {kind: "remove"};
+}
+function beginDrag() {
+  const amt = S.bets[drag.key]; if (!amt) { drag.key = null; return; }
+  drag.active = true;
+  drag.ghost = el("div", "drag-ghost chip-face " + denomClass(amt), shortAmt(amt));
+  document.body.appendChild(drag.ghost);
+  betEl[drag.key].classList.add("drag-src");
+  document.body.classList.add("dragging");
+  if (navigator.vibrate) navigator.vibrate(10);
+  moveDrag(drag.x, drag.y);
+}
+function moveDrag(x, y) {
+  drag.ghost.style.transform = `translate(${x}px, ${y}px)`;
+  const t = drag.target = dragTargetAt(x, y);
+  clearHighlight();
+  if (t.kind === "bet" && t.key !== drag.key) highlight(t.key);
+  drag.ghost.classList.toggle("remove", t.kind === "remove");
+  drag.ghost.dataset.label = t.kind === "remove" ? "Take back" : t.kind === "bet" && t.key !== drag.key ? "Move here" : "";
+}
+function endDrag(cancel) {
+  clearTimeout(drag.timer);
+  if (drag.active) {
+    const from = drag.key, t = drag.target;
+    drag.ghost.remove(); betEl[from].classList.remove("drag-src"); document.body.classList.remove("dragging"); clearHighlight();
+    if (!cancel && t) { if (t.kind === "remove") removeBet(from); else if (t.kind === "bet" && t.key !== from) moveBet(from, t.key); }
+    drag.suppressClick = true; setTimeout(() => { drag.suppressClick = false; }, 0);
+  }
+  drag.key = null; drag.active = false; drag.target = null; drag.ghost = null;
+}
+function pickUp(target, x, y) {
+  if (S.spinning) return false;
+  const b = target.closest("[data-bet]"); if (!b || !S.bets[b.dataset.bet]) return false;
+  drag.key = b.dataset.bet; drag.x = x; drag.y = y; return true;
+}
+board.addEventListener("pointerdown", e => { if (e.pointerType !== "touch" && e.button === 0) pickUp(e.target, e.clientX, e.clientY); });
+document.addEventListener("pointermove", e => {
+  if (e.pointerType === "touch" || !drag.key) return;
+  if (!drag.active) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return; drag.x = e.clientX; drag.y = e.clientY; beginDrag(); return; }
+  moveDrag(e.clientX, e.clientY);
 });
+document.addEventListener("pointerup", e => { if (e.pointerType !== "touch" && drag.key) endDrag(false); });
+board.addEventListener("touchstart", e => {
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  if (pickUp(e.target, t.clientX, t.clientY)) drag.timer = setTimeout(() => { if (drag.key) beginDrag(); }, 350);
+}, {passive: true});
+document.addEventListener("touchmove", e => {
+  if (!drag.key) return;
+  const t = e.touches[0];
+  if (!drag.active) { if (Math.hypot(t.clientX - drag.x, t.clientY - drag.y) > 8) endDrag(true); return; }
+  e.preventDefault(); moveDrag(t.clientX, t.clientY);
+}, {passive: false});
+document.addEventListener("touchend", e => { if (!drag.key) return; if (drag.active) e.preventDefault(); endDrag(false); });
+document.addEventListener("touchcancel", () => { if (drag.key) endDrag(true); });
 $("mSpin").addEventListener("click", spin);
 $("presets").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b || b.disabled) return;

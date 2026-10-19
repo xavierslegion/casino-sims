@@ -177,6 +177,7 @@ button,select,input{font:inherit;color:inherit}
   box-shadow:0 2px 3px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.25)}
 .c1{--chip:#efebdf;--chip-edge:#2e5b9a;color:#17202e}
 .c5{--chip:#bd2530;--chip-edge:#f2ebd9}
+.c10{--chip:#1f4f9c;--chip-edge:#f2ebd9}
 .c25{--chip:#1d7a44;--chip-edge:#f2ebd9}
 .c100{--chip:#1c1c1c;--chip-edge:#f2ebd9}
 .c500{--chip:#5a2b82;--chip-edge:#f0c94e}
@@ -266,8 +267,34 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 }
 /* take back mode, $6 prompt, phone bar */
 button,.bet{touch-action:manipulation}
-.layout.removing,.props.removing{outline:2px dashed var(--loss);outline-offset:3px}
-#btnTakeBack[aria-pressed="true"]{border-color:var(--loss);color:var(--loss)}
+/* next roll strip */
+.nextroll{display:flex;flex-direction:column;gap:6px}
+.nr-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.nr-head h2{font:600 13px/1.2 var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
+.nr-grid{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px}
+.nr{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:6px;background:var(--panel);border:1px solid var(--line-soft);font-variant-numeric:tabular-nums;min-width:0}
+.nr b{font:700 17px/1 var(--f-display)}
+.nr span{font:600 12px/1.1 var(--f-label);white-space:nowrap}
+.nr em{font:500 10px/1.1 var(--f-label);font-style:normal;color:var(--muted);white-space:nowrap}
+.nr.win{border-color:var(--gain);background:rgba(130,214,160,.12)} .nr.win span{color:var(--gain)}
+.nr.lose span{color:var(--loss)}
+.nr.even span{color:var(--muted)}
+.nr.seven{box-shadow:inset 0 -2px 0 var(--table-red)}
+@media (max-width:640px){
+  .nr{padding:5px 1px} .nr b{font-size:14px} .nr span{font-size:10px} .nr em{font-size:9px}
+  .nr-head .sub{display:none}
+}
+/* dragging chips */
+.layout,.props{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.drag-src .chip{opacity:.35}
+.bet.drop-on{background:rgba(214,174,90,.22);box-shadow:inset 0 0 0 2px var(--brass)}
+body.dragging,body.dragging *{cursor:grabbing!important}
+.drag-ghost{position:fixed;left:0;top:0;width:36px;height:36px;margin:-18px 0 0 -18px;z-index:60;pointer-events:none;font-size:11px;
+  box-shadow:0 8px 18px rgba(0,0,0,.6), 0 0 0 2px var(--brass)}
+.drag-ghost.remove{box-shadow:0 8px 18px rgba(0,0,0,.6), 0 0 0 3px var(--loss);opacity:.85}
+.drag-ghost[data-label]:not([data-label=""])::after{content:attr(data-label);position:absolute;top:44px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  padding:4px 8px;border-radius:4px;background:var(--page);border:1px solid var(--line-soft);font:600 11px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.drag-ghost.remove::after{color:var(--loss)!important;border-color:var(--loss)!important}
 .die.mid{--s:34px;padding:5px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
 .mdice{display:flex;gap:6px}
 .mdice.rolling .die{animation:tumble .18s linear infinite}
@@ -365,13 +392,17 @@ button,.bet{touch-action:manipulation}
     </section>
 
     <section class="board-col" aria-label="Craps layout">
+      <div class="nextroll" id="nextRoll" hidden>
+        <div class="nr-head"><h2>Next roll</h2><span class="sub">What each total does to your bets</span></div>
+        <div class="nr-grid" id="nrGrid"></div>
+      </div>
       <div class="layout-scroll"><div class="layout" id="layout"></div></div>
       <div class="props-head">
         <h2 class="label-row" style="font:600 13px/1.2 var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--brass)">Center bets</h2>
         <span class="sub">Hardways stay up until a 7 or the easy way. The rest are one-roll bets.</span>
       </div>
       <div class="props" id="props"></div>
-      <p class="hint">Bet the Pass Line or Don't Pass on the come-out. Once a point is set, click the odds spot behind your line bet, use Come and Don't Come, and click a come bet's strip in its number box to add odds. Click a number for a place bet. To take a chip back, right-click the bet or turn on Take back mode and tap it.</p>
+      <p class="hint">Bet the Pass Line or Don't Pass on the come-out. Once a point is set, click the odds spot behind your line bet, use Come and Don't Come, and click a come bet's strip in its number box to add odds. Click a number for a place bet. Drag a stack to another bet to move it, or off the table to take it back; on a phone, press and hold the chips first. Right-click a bet to take back one chip.</p>
       <div class="rack">
         <div class="chips" id="chips" role="radiogroup" aria-label="Chip value"></div>
         <form class="custom" id="customForm">
@@ -391,11 +422,11 @@ button,.bet{touch-action:manipulation}
         <button class="btn" id="btnUndo" type="button">Undo</button>
         <button class="btn" id="btnDown" type="button">Take down</button>
         <button class="btn" id="btnMaxOdds" type="button">Max odds</button>
-        <button class="btn" id="btnTakeBack" type="button" aria-pressed="false">Take back mode</button>
       </div>
       <div class="toggles">
         <label class="toggle" for="keep"><input type="checkbox" id="keep"> Keep bets up</label>
         <label class="toggle" for="working"><input type="checkbox" id="working"> Place bets and hardways work on the come-out</label>
+        <label class="toggle" for="prompts"><input type="checkbox" id="prompts"> Dealer pop-ups for squaring up and moving bets</label>
         <label class="toggle" for="quick"><input type="checkbox" id="quick"> Quick roll</label>
       </div>
       <p class="status" id="status" role="status"></p>
@@ -540,7 +571,7 @@ const LAY_ODDS = {4: 1 / 2, 10: 1 / 2, 5: 2 / 3, 9: 2 / 3, 6: 5 / 6, 8: 5 / 6};
 const PLACE_PAY = {4: 9 / 5, 10: 9 / 5, 5: 7 / 5, 9: 7 / 5, 6: 7 / 6, 8: 7 / 6};
 const HARD_PAY = {4: 7, 10: 7, 6: 9, 8: 9};
 const PIPS = {1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]};
-const DENOMS = [1, 5, 25, 100, 500, 1000];
+const DENOMS = [1, 5, 10, 25, 100, 500, 1000];
 const MINS = [1, 2, 5, 10, 15, 25, 50, 100];
 const KEY = "hard-eight-craps-v1";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -551,7 +582,7 @@ const pnClass = v => v > 0.004 ? "pos" : v < -0.004 ? "neg" : "";
 const r2 = v => Math.round(v * 100) / 100;
 const payOf = (amt, ratio) => Math.floor(amt * ratio * 100 + 1e-6) / 100;
 const shortAmt = v => v >= 1000 ? (+(v / 1000).toFixed(v % 1000 ? 1 : 0)) + "k" : (Number.isInteger(v) ? String(v) : v.toFixed(2));
-const denomClass = v => v >= 1000 ? "c1000" : v >= 500 ? "c500" : v >= 100 ? "c100" : v >= 25 ? "c25" : v >= 5 ? "c5" : "c1";
+const denomClass = v => v >= 1000 ? "c1000" : v >= 500 ? "c500" : v >= 100 ? "c100" : v >= 25 ? "c25" : v >= 10 ? "c10" : v >= 5 ? "c5" : "c1";
 const sum = b => r2(Object.values(b).reduce((a, x) => a + x, 0));
 function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
 const dieHTML = (v, cls) => `<span class="die ${cls || ""}" aria-hidden="true">${[0,1,2,3,4,5,6,7,8].map(i => `<i class="${PIPS[v].includes(i) ? "p" : ""}"></i>`).join("")}</span>`;
@@ -598,11 +629,11 @@ function makeSession(bank, min, odds) {
     hand: 0, longest: 0, shooters: 1, pointsSet: 0, pointsMade: 0, sevenOuts: 0, naturals: 0, craps: 0};
 }
 const S = {session: makeSession(500, 10, "345"), past: [], chip: 10, bets: {}, point: null, undo: [],
-  keep: false, working: false, quick: false, rolling: false, win: "all"};
+  keep: false, working: false, prompts: true, quick: false, rolling: false, win: "all"};
 const B = () => S.bets;
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bets: S.bets, point: S.point, keep: S.keep, working: S.working, quick: S.quick, win: S.win})); } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bets: S.bets, point: S.point, keep: S.keep, working: S.working, prompts: S.prompts, quick: S.quick, win: S.win})); } catch (e) {}
 }
 function load() {
   try {
@@ -613,7 +644,7 @@ function load() {
     S.chip = d.chip >= 1 ? Math.floor(d.chip) : 10;
     S.bets = {}; for (const k in (d.bets || {})) if (META[k] && d.bets[k] > 0) S.bets[k] = d.bets[k];
     S.point = NUMS.includes(d.point) ? d.point : null;
-    S.keep = !!d.keep; S.working = !!d.working; S.quick = !!d.quick; S.win = d.win || "all";
+    S.keep = !!d.keep; S.working = !!d.working; S.prompts = d.prompts !== false; S.quick = !!d.quick; S.win = d.win || "all";
   } catch (e) {}
 }
 
@@ -740,16 +771,50 @@ function takeBack(key) {
   status(`Took back ${money(amt)} from ${META[key].label}.`);
   afterBetChange();
 }
-function undo() {
-  const u = S.undo.pop(); if (!u) return;
+// Undo entries are one {key, amt} change, or a list of them for a move.
+function reverseStep(u) {
   if (u.amt > 0) {
     B()[u.key] = r2((B()[u.key] || 0) - u.amt); if (B()[u.key] <= 0) delete B()[u.key];
-    S.session.rack = r2(S.session.rack + u.amt);
-  } else {
-    if (-u.amt > S.session.rack) { status("Not enough in your bankroll to put that chip back.", "warn"); return; }
-    B()[u.key] = r2((B()[u.key] || 0) - u.amt); S.session.rack = r2(S.session.rack + u.amt);
+    S.session.rack = r2(S.session.rack + u.amt); return true;
   }
-  status("Undid last chip."); afterBetChange();
+  if (-u.amt > S.session.rack) return false;
+  B()[u.key] = r2((B()[u.key] || 0) - u.amt); S.session.rack = r2(S.session.rack + u.amt); return true;
+}
+function undo() {
+  const u = S.undo.pop(); if (!u) return;
+  for (const step of Array.isArray(u) ? u.slice().reverse() : [u]) {
+    if (!reverseStep(step)) { status("Not enough in your bankroll to put that chip back.", "warn"); afterBetChange(); return; }
+  }
+  status(Array.isArray(u) ? "Moved it back." : "Undid last chip."); afterBetChange();
+}
+// The bet whose chips sit on an element. A come strip holds the flat bet and its odds; the odds come off first.
+function stackAt(key) {
+  const m = key.match(/^(comeOdds|dcOdds)(\d+)$/);
+  if (m && !B()[key]) key = (m[1] === "comeOdds" ? "come" : "dc") + m[2];
+  return B()[key] ? key : null;
+}
+function removeBet(key) {
+  const why = locked(key); if (why) { status(why, "warn"); return; }
+  const amt = B()[key]; if (!amt) return;
+  delete B()[key]; S.session.rack = r2(S.session.rack + amt);
+  S.undo.push({key, amt: -amt});
+  status(`Took back ${META[key].label}: ${money(amt)} to your bankroll.`);
+  afterBetChange();
+}
+function moveBet(from, to) {
+  const amt = B()[from]; if (!amt || from === to) return;
+  const why = locked(from) || (/^(come|dc)\d+$/.test(from) ? "A come bet on a number can only be taken down, not moved." : null);
+  if (why) { status(why, "warn"); return; }
+  // Check the target as if these chips were already off the table.
+  delete B()[from];
+  const r = room(to);
+  const bad = r.msg || (amt > r.cap ? `Only ${money(Math.max(0, r.cap))} more fits on ${META[to].label.toLowerCase()}.` : null);
+  B()[from] = amt;
+  if (bad) { status(bad, "warn"); return; }
+  delete B()[from]; B()[to] = r2((B()[to] || 0) + amt);
+  S.undo.push([{key: from, amt: -amt}, {key: to, amt}]);
+  status(`Moved ${money(amt)} from ${META[from].label} to ${META[to].label}.`);
+  afterBetChange();
 }
 function takeDown() {
   let back = 0;
@@ -835,6 +900,20 @@ function renderFix(open) {
   };
   f.innerHTML = (i.up ? opt(i.up, `Add ${money(r2(i.up - i.a))}`) : "") + (i.down ? opt(i.down, `Change back ${money(r2(i.a - i.down))}`) : "");
   if (opening) (f.querySelector("button:not([disabled])") || $("fixDown")).focus();
+}
+// With dealer pop-ups off, square up uneven bets the way a dealer would by default: make change down to the nearest
+// paying amount, round up to the minimum when change would drop it below, or take it down if the bankroll can't cover that.
+function autoSquare() {
+  const notes = [];
+  for (let i = unitIssue(), guard = 0; i && guard < 50; i = unitIssue(), guard++) {
+    let v = i.down;
+    if (!v && i.up && r2(i.up - i.a) <= S.session.rack) v = i.up;
+    if (v) B()[i.k] = v; else delete B()[i.k];
+    S.session.rack = r2(S.session.rack - r2(v - i.a));
+    notes.push(v ? `${i.label} ${money(i.a)} to ${money(v)}` : `${i.label} taken down, ${money(i.a)} back`);
+  }
+  S.undo = [];
+  return notes.length ? `Dealer squared up: ${notes.join("; ")}.` : "";
 }
 // Close the dialog and go back to betting without rolling.
 function keepBetting() {
@@ -963,7 +1042,11 @@ function keepUp(before) {
 async function roll() {
   if (S.rolling) return;
   const err = checkLimits(); if (err) { status(err, "warn"); return; }
-  if (unitIssue()) { rollAfterFix = true; status("The dealer needs to square up a bet before the roll."); renderFix(true); return; }
+  let squared = "";
+  if (unitIssue()) {
+    if (S.prompts) { rollAfterFix = true; status("The dealer needs to square up a bet before the roll."); renderFix(true); return; }
+    squared = autoSquare();
+  }
   const reps = Math.max(1, parseInt($("repeat").value, 10) || 1);
   S.rolling = true; setBusy(true); status(reps > 1 ? `Rolling ${reps} times...` : "Dice are out.");
   let res = null; const agg = {rolls: 0, net: 0};
@@ -980,10 +1063,10 @@ async function roll() {
   showRoll(res, reps > 1 ? agg : null);
   renderAll();
   if (reps === 1) flashWinners(res);
-  status("");
+  status(squared);
   save();
   // The point just landed on a number you have placed: offer to move that bet, as a dealer would.
-  if (reps === 1 && res.tag === "P" && B()["place" + res.s]) openMove(res.s);
+  if (reps === 1 && S.prompts && res.tag === "P" && B()["place" + res.s]) openMove(res.s);
 }
 
 /* ---------- move a place bet off the point ---------- */
@@ -1090,6 +1173,31 @@ function renderChips() {
     const r = room(k); host[k].classList.toggle("locked", !!r.msg);
   }
   $("pointLine").textContent = S.point == null ? "Come-out roll" : `Point is ${S.point}`;
+  renderNext();
+}
+// Net result of one roll on the current bets, worked out on a copy so nothing on the table changes.
+function previewNet(a, c) {
+  const saved = {bets: S.bets, point: S.point, session: S.session};
+  S.bets = {...saved.bets}; S.session = {...saved.session, rolls: []};
+  try { return settle(a, c).net; } finally { S.bets = saved.bets; S.point = saved.point; S.session = saved.session; }
+}
+const compact = v => {
+  const a = Math.abs(v), s = a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1) + "k" : Number.isInteger(a) ? String(a) : a.toFixed(2);
+  return (v > 0 ? "+$" : "−$") + s;
+};
+function renderNext() {
+  const box = $("nextRoll");
+  if (!Object.keys(B()).length) { box.hidden = true; return; }
+  box.hidden = false;
+  let html = "";
+  for (let s = 2; s <= 12; s++) {
+    let easy = null, hard = null;
+    for (let a = 1; a <= 6; a++) { const c = s - a; if (c < a || c > 6) continue; if (a === c) hard = previewNet(a, c); else if (easy == null) easy = previewNet(a, c); }
+    const main = easy ?? hard, cls = main > 0 ? "win" : main < 0 ? "lose" : "even";
+    const hardNote = easy != null && hard != null && hard !== easy ? `<em>hard ${hard ? compact(hard) : "even"}</em>` : "";
+    html += `<div class="nr ${cls}${s === 7 ? " seven" : ""}" title="Rolling ${s}: ${main ? (main > 0 ? "win " : "lose ") + money(Math.abs(main)) : "no change"}${hardNote ? `; the hard way: ${hard ? (hard > 0 ? "win " : "lose ") + money(Math.abs(hard)) : "no change"}` : ""}"><b>${s}</b><span>${main ? compact(main) : "–"}</span>${hardNote}</div>`;
+  }
+  $("nrGrid").innerHTML = html;
 }
 function renderRack() {
   const box = $("chips"); box.innerHTML = "";
@@ -1111,7 +1219,7 @@ function updateButtons() {
   $("btnUndo").disabled = !S.undo.length;
   $("btnDown").disabled = !t;
   $("btnMaxOdds").disabled = S.point == null && !NUMS.some(n => B()["come" + n] || B()["dc" + n]);
-  $("keep").checked = S.keep; $("working").checked = S.working; $("quick").checked = S.quick;
+  $("keep").checked = S.keep; $("working").checked = S.working; $("prompts").checked = S.prompts; $("quick").checked = S.quick;
 }
 function showDice(a, c) { $("dice").innerHTML = dieHTML(a) + dieHTML(c); $("mDice").innerHTML = dieHTML(a, "mid") + dieHTML(c, "mid"); }
 // Fixed bar on phones so you can bet and roll without scrolling back to the dice.
@@ -1248,14 +1356,82 @@ function startSession(bank, min, odds) {
 }
 
 /* ---------- events ---------- */
-let takeBackMode = false;
-function onBetClick(e) { const b = e.target.closest("[data-bet]"); if (!b) return; if (takeBackMode) takeBack(b.dataset.bet); else placeBet(b.dataset.bet); }
-$("btnTakeBack").addEventListener("click", e => {
-  takeBackMode = !takeBackMode;
-  e.currentTarget.setAttribute("aria-pressed", String(takeBackMode));
-  layout.classList.toggle("removing", takeBackMode); props.classList.toggle("removing", takeBackMode);
-  status(takeBackMode ? `Take back mode is on. Tap a bet to take back one ${money(S.chip)} chip.` : "Take back mode is off. Tap a bet to add chips.");
+function onBetClick(e) { if (drag.suppressClick) return; const b = e.target.closest("[data-bet]"); if (b) placeBet(b.dataset.bet); }
+
+/* ---------- drag chips ---------- */
+// Drag a stack onto another bet to move it, or off the table to take it back.
+// Mouse: press and drag. Touch: press and hold, then drag, so a quick swipe still scrolls the page.
+const drag = {key: null, el: null, active: false, ghost: null, target: null, x: 0, y: 0, timer: 0, suppressClick: false};
+function dragTargetAt(x, y) {
+  const at = document.elementFromPoint(x, y);
+  if (!at) return {kind: "remove"};
+  const b = at.closest("#layout [data-bet], #props [data-bet]");
+  if (b) return {kind: "bet", key: b.dataset.bet, el: b};
+  return at.closest(".layout-scroll, .props") ? {kind: "none"} : {kind: "remove"};
+}
+function beginDrag() {
+  const why = locked(drag.key);
+  if (why) { status(why, "warn"); drag.key = null; return; }
+  const amt = B()[drag.key];
+  drag.active = true;
+  drag.ghost = el("div", "drag-ghost chip-face " + denomClass(amt), shortAmt(amt));
+  document.body.appendChild(drag.ghost);
+  drag.el.classList.add("drag-src");
+  document.body.classList.add("dragging");
+  if (navigator.vibrate) navigator.vibrate(10);
+  moveDrag(drag.x, drag.y);
+}
+function moveDrag(x, y) {
+  drag.ghost.style.transform = `translate(${x}px, ${y}px)`;
+  const t = drag.target = dragTargetAt(x, y);
+  document.querySelectorAll(".drop-on").forEach(e => e.classList.remove("drop-on"));
+  const elsewhere = t.kind === "bet" && t.el !== drag.el;
+  if (elsewhere) t.el.classList.add("drop-on");
+  drag.ghost.classList.toggle("remove", t.kind === "remove");
+  drag.ghost.dataset.label = t.kind === "remove" ? "Take back" : elsewhere ? "Move here" : "";
+}
+function endDrag(cancel) {
+  clearTimeout(drag.timer);
+  if (drag.active) {
+    const from = drag.key, t = drag.target;
+    drag.ghost.remove(); drag.el.classList.remove("drag-src"); document.body.classList.remove("dragging");
+    document.querySelectorAll(".drop-on").forEach(e => e.classList.remove("drop-on"));
+    if (!cancel && t) {
+      if (t.kind === "remove") removeBet(from);
+      else if (t.kind === "bet" && t.el !== drag.el) moveBet(from, t.key);
+    }
+    drag.suppressClick = true; setTimeout(() => { drag.suppressClick = false; }, 0);
+  }
+  drag.key = null; drag.el = null; drag.active = false; drag.target = null; drag.ghost = null;
+}
+function pickUp(target, x, y) {
+  if (S.rolling) return false;
+  const b = target.closest("[data-bet]"); if (!b) return false;
+  const key = stackAt(b.dataset.bet); if (!key) return false;
+  drag.key = key; drag.el = b; drag.x = x; drag.y = y; return true;
+}
+for (const root of [layout, props]) {
+  root.addEventListener("pointerdown", e => { if (e.pointerType !== "touch" && e.button === 0) pickUp(e.target, e.clientX, e.clientY); });
+  root.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    if (pickUp(e.target, t.clientX, t.clientY)) drag.timer = setTimeout(() => { if (drag.key) beginDrag(); }, 350);
+  }, {passive: true});
+}
+document.addEventListener("pointermove", e => {
+  if (e.pointerType === "touch" || !drag.key) return;
+  if (!drag.active) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return; drag.x = e.clientX; drag.y = e.clientY; beginDrag(); if (!drag.active) return; }
+  moveDrag(e.clientX, e.clientY);
 });
+document.addEventListener("pointerup", e => { if (e.pointerType !== "touch" && drag.key) endDrag(false); });
+document.addEventListener("touchmove", e => {
+  if (!drag.key) return;
+  const t = e.touches[0];
+  if (!drag.active) { if (Math.hypot(t.clientX - drag.x, t.clientY - drag.y) > 8) endDrag(true); return; }
+  e.preventDefault(); moveDrag(t.clientX, t.clientY);
+}, {passive: false});
+document.addEventListener("touchend", e => { if (!drag.key) return; if (drag.active) e.preventDefault(); endDrag(false); });
+document.addEventListener("touchcancel", () => { if (drag.key) endDrag(true); });
 $("fix").addEventListener("click", e => { const b = e.target.closest("[data-fix]"); if (b && !b.disabled) applyFix(+b.dataset.fix); });
 $("fixDown").addEventListener("click", () => applyFix(0));
 $("fixCancel").addEventListener("click", keepBetting);
@@ -1278,6 +1454,10 @@ $("btnMaxOdds").addEventListener("click", maxAllOdds);
 $("repeat").addEventListener("change", updateButtons);
 $("keep").addEventListener("change", e => { S.keep = e.target.checked; save(); });
 $("working").addEventListener("change", e => { S.working = e.target.checked; renderChips(); save(); });
+$("prompts").addEventListener("change", e => {
+  S.prompts = e.target.checked; save();
+  status(S.prompts ? "Dealer pop-ups are on. Uneven bets are squared up with you before the roll." : "Dealer pop-ups are off. Uneven bets are squared up automatically, and place bets stay put when the point lands on them.");
+});
 $("quick").addEventListener("change", e => { S.quick = e.target.checked; save(); });
 $("window").addEventListener("change", e => { S.win = e.target.value; renderDist(); save(); });
 $("rebuyForm").addEventListener("submit", e => {
