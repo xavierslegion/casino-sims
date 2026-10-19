@@ -422,6 +422,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
         <button class="btn" id="btnUndo" type="button">Undo</button>
         <button class="btn" id="btnDown" type="button">Take down</button>
         <button class="btn" id="btnMaxOdds" type="button">Max odds</button>
+        <button class="btn" id="btnSound" type="button" aria-pressed="true">Sound on</button>
       </div>
       <div class="toggles">
         <label class="toggle" for="keep"><input type="checkbox" id="keep"> Keep bets up</label>
@@ -629,11 +630,11 @@ function makeSession(bank, min, odds) {
     hand: 0, longest: 0, shooters: 1, pointsSet: 0, pointsMade: 0, sevenOuts: 0, naturals: 0, craps: 0};
 }
 const S = {session: makeSession(500, 10, "345"), past: [], chip: 10, bets: {}, point: null, undo: [],
-  keep: false, working: false, prompts: true, quick: false, rolling: false, win: "all"};
+  keep: false, working: false, prompts: true, quick: false, sound: true, rolling: false, win: "all"};
 const B = () => S.bets;
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bets: S.bets, point: S.point, keep: S.keep, working: S.working, prompts: S.prompts, quick: S.quick, win: S.win})); } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bets: S.bets, point: S.point, keep: S.keep, working: S.working, prompts: S.prompts, quick: S.quick, sound: S.sound, win: S.win})); } catch (e) {}
 }
 function load() {
   try {
@@ -644,7 +645,7 @@ function load() {
     S.chip = d.chip >= 1 ? Math.floor(d.chip) : 10;
     S.bets = {}; for (const k in (d.bets || {})) if (META[k] && d.bets[k] > 0) S.bets[k] = d.bets[k];
     S.point = NUMS.includes(d.point) ? d.point : null;
-    S.keep = !!d.keep; S.working = !!d.working; S.prompts = d.prompts !== false; S.quick = !!d.quick; S.win = d.win || "all";
+    S.keep = !!d.keep; S.working = !!d.working; S.prompts = d.prompts !== false; S.quick = !!d.quick; S.sound = d.sound !== false; S.win = d.win || "all";
   } catch (e) {}
 }
 
@@ -1053,7 +1054,11 @@ async function roll() {
   for (let i = 0; i < reps; i++) {
     const before = {...B()};
     const a = rollDie(), c = rollDie();
-    if (reps === 1 && !reduceMotion) await tumble(S.quick ? 350 : 1100);
+    if (reps === 1) {
+      const ms = reduceMotion ? 0 : S.quick ? 350 : 1100;
+      Sound.dice(Math.max(ms, 350) / 1000);
+      if (ms) await tumble(ms);
+    }
     res = settle(a, c);
     agg.rolls++; agg.net = r2(agg.net + res.net);
     if (S.keep) keepUp(before);
@@ -1063,6 +1068,9 @@ async function roll() {
   showRoll(res, reps > 1 ? agg : null);
   renderAll();
   if (reps === 1) flashWinners(res);
+  // A bigger chime when a 7-to-1 or better bet hits (hardways and one-roll props).
+  const net = reps > 1 ? agg.net : res.net, big = reps === 1 && res.ev.some(e => e.kind === "win" && e.profit >= e.amt * 7);
+  if (net > 0) Sound.win(big); else if (net < 0) Sound.lose();
   status(squared);
   save();
   // The point just landed on a number you have placed: offer to move that bet, as a dealer would.
@@ -1131,6 +1139,92 @@ function flashWinners(res) {
     host[e.k].appendChild(c); setTimeout(() => c.remove(), 1700);
   }
 }
+
+/* ---------- sound ---------- */
+// Every sound is synthesized with the Web Audio API, so the page needs no audio files.
+// Browsers only allow audio after the first tap or click, so the engine starts on the first interaction.
+const Sound = (() => {
+  let ac = null, out = null, noise = null;
+  function ctx() {
+    if (!S.sound) return null;
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+      try { ac = new AC(); } catch (e) { return null; }
+      out = ac.createGain(); out.gain.value = 0.7; out.connect(ac.destination);
+      noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ac.state === "suspended") ac.resume().catch(() => {});
+    return ac;
+  }
+  // One enveloped oscillator note.
+  function tone(t, freq, dur, {type = "sine", gain = 0.2, to = null} = {}) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.02);
+  }
+  // A burst of filtered noise: clicks, clacks and rumbles.
+  function hiss(t, dur, {freq = 2000, q = 1, gain = 0.2, type = "bandpass", attack = 0.002} = {}) {
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noise; s.loop = true;
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.02);
+    return f;
+  }
+  return {
+    unlock() { ctx(); },
+    // Roulette: the ball rolling on the track and the wheel turning, both fading as they slow.
+    wheel(sec) {
+      if (!ctx()) return; const t = ac.currentTime;
+      const roll = hiss(t, sec * 0.72, {freq: 3200, q: 0.8, gain: 0.05, attack: 0.15});
+      roll.frequency.exponentialRampToValueAtTime(1300, t + sec * 0.72);
+      const rumble = hiss(t, sec, {freq: 240, q: 0.7, gain: 0.1, type: "lowpass", attack: 0.2});
+      rumble.frequency.exponentialRampToValueAtTime(80, t + sec);
+    },
+    // Roulette: the ball striking a fret between pockets.
+    fret(strength) {
+      if (!ctx()) return; const t = ac.currentTime;
+      hiss(t, 0.03, {freq: 3600 + Math.random() * 1400, q: 4, gain: 0.17 * strength});
+      tone(t, 1800 + Math.random() * 500, 0.025, {type: "triangle", gain: 0.03 * strength});
+    },
+    // Roulette: the ball dropping into its pocket.
+    settle() {
+      if (!ctx()) return; const t = ac.currentTime;
+      hiss(t, 0.07, {freq: 2300, q: 2, gain: 0.24});
+      hiss(t + 0.08, 0.04, {freq: 2900, q: 3, gain: 0.08});
+    },
+    // Craps: dice rattled in the hand, then thrown, bouncing and tumbling to a stop.
+    dice(sec) {
+      if (!ctx()) return; const t0 = ac.currentTime, shake = sec * 0.55, k = Math.min(1, sec / 1.1);
+      for (let t = 0; t < shake; t += 0.045 + Math.random() * 0.05) hiss(t0 + t, 0.03, {freq: 1500 + Math.random() * 900, q: 3, gain: 0.07 + Math.random() * 0.05});
+      [0, 0.13, 0.22, 0.28, 0.32].forEach((d, i) => {
+        const at = t0 + shake + d * k, g = 0.32 * Math.pow(0.7, i);
+        hiss(at, 0.05, {freq: 3000 + Math.random() * 1500, q: 2.5, gain: g});
+        hiss(at + 0.014, 0.035, {freq: 5000 + Math.random() * 800, q: 4, gain: g * 0.6});
+      });
+    },
+    // A rising chime for a win; a longer run with sparkle for a big one.
+    win(big) {
+      if (!ctx()) return; const t = ac.currentTime;
+      const notes = big ? [784, 988, 1175, 1568, 1976, 2349] : [1047, 1319, 1568];
+      notes.forEach((f, i) => { tone(t + i * 0.075, f, 0.5, {type: "triangle", gain: 0.11}); tone(t + i * 0.075, f * 2, 0.3, {gain: 0.03}); });
+      if (big) for (let i = 0; i < 8; i++) tone(t + 0.45 + i * 0.06, 2600 + Math.random() * 1400, 0.12, {gain: 0.035});
+    },
+    // A soft, low two-note fall for a loss.
+    lose() {
+      if (!ctx()) return; const t = ac.currentTime;
+      tone(t, 294, 0.28, {gain: 0.13, to: 262});
+      tone(t + 0.2, 220, 0.45, {gain: 0.12, to: 175});
+    },
+    // A short tick to confirm sound was turned on.
+    blip() { if (!ctx()) return; tone(ac.currentTime, 1319, 0.12, {type: "triangle", gain: 0.08}); }
+  };
+})();
+document.addEventListener("pointerdown", () => Sound.unlock(), {passive: true});
+document.addEventListener("keydown", () => Sound.unlock());
 
 /* ---------- calls ---------- */
 const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
@@ -1220,6 +1314,8 @@ function updateButtons() {
   $("btnDown").disabled = !t;
   $("btnMaxOdds").disabled = S.point == null && !NUMS.some(n => B()["come" + n] || B()["dc" + n]);
   $("keep").checked = S.keep; $("working").checked = S.working; $("prompts").checked = S.prompts; $("quick").checked = S.quick;
+  $("btnSound").textContent = S.sound ? "Sound on" : "Sound off";
+  $("btnSound").setAttribute("aria-pressed", String(S.sound));
 }
 function showDice(a, c) { $("dice").innerHTML = dieHTML(a) + dieHTML(c); $("mDice").innerHTML = dieHTML(a, "mid") + dieHTML(c, "mid"); }
 // Fixed bar on phones so you can bet and roll without scrolling back to the dice.
@@ -1459,6 +1555,7 @@ $("prompts").addEventListener("change", e => {
   status(S.prompts ? "Dealer pop-ups are on. Uneven bets are squared up with you before the roll." : "Dealer pop-ups are off. Uneven bets are squared up automatically, and place bets stay put when the point lands on them.");
 });
 $("quick").addEventListener("change", e => { S.quick = e.target.checked; save(); });
+$("btnSound").addEventListener("click", () => { S.sound = !S.sound; updateButtons(); save(); Sound.blip(); });
 $("window").addEventListener("change", e => { S.win = e.target.value; renderDist(); save(); });
 $("rebuyForm").addEventListener("submit", e => {
   e.preventDefault();

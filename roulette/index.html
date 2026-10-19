@@ -360,6 +360,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
         <button class="btn" id="btnClear" type="button">Clear</button>
         <button class="btn" id="btnRebet" type="button">Rebet</button>
         <button class="btn" id="btnDouble" type="button">Double</button>
+        <button class="btn" id="btnSound" type="button" aria-pressed="true">Sound on</button>
         <label class="toggle" for="quick"><input type="checkbox" id="quick"> Quick spin</label>
       </div>
       <div class="saved">
@@ -567,11 +568,11 @@ function makeSession(bank, min) {
   return {id: Date.now(), started: new Date().toISOString(), start: bank, buyIn: bank, balance: bank, tableMin: min,
     spins: [], wagered: 0, returned: 0, ev: 0, best: null, worst: null};
 }
-const S = {session: makeSession(500, 5), past: [], chip: 5, bets: {}, lastBets: null, undo: [], quick: false, spinning: false, win: "all", rot: 0, ball: null, presets: [null, null, null]};
+const S = {session: makeSession(500, 5), past: [], chip: 5, bets: {}, lastBets: null, undo: [], quick: false, sound: true, spinning: false, win: "all", rot: 0, ball: null, presets: [null, null, null]};
 
 function save() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bets: S.bets, lastBets: S.lastBets, quick: S.quick, win: S.win, presets: S.presets}));
+    localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bets: S.bets, lastBets: S.lastBets, quick: S.quick, sound: S.sound, win: S.win, presets: S.presets}));
   } catch (e) {}
 }
 function load() {
@@ -584,6 +585,7 @@ function load() {
     S.bets = {}; for (const k in (d.bets || {})) if (BETS[k] && d.bets[k] > 0) S.bets[k] = d.bets[k];
     S.lastBets = d.lastBets || null;
     S.quick = !!d.quick;
+    S.sound = d.sound !== false;
     S.win = d.win || "all";
     if (Array.isArray(d.presets)) S.presets = [0, 1, 2].map(i => {
       const p = d.presets[i]; if (!p) return null;
@@ -809,7 +811,11 @@ async function spin() {
       S.bets = {...template}; S.session.balance -= tTotal;
     }
     n = drawPocket(); res = resolve(n, S.bets);
-    if (reps === 1) await animateTo(n, reduceMotion ? 300 : S.quick ? 900 : 4800);
+    if (reps === 1) {
+      const dur = reduceMotion ? 300 : S.quick ? 900 : 4800;
+      Sound.wheel(dur / 1000);
+      await animateTo(n, dur);
+    }
     record(n, res);
     agg.spins++; agg.wager += res.wager; agg.ret += res.ret;
     if (tTotal > 0) S.lastBets = {...template};
@@ -820,6 +826,8 @@ async function spin() {
   showResult(n, res, reps > 1 ? agg : null);
   renderAll();
   if (reps === 1) flashWinners(res);
+  const wagered = reps > 1 ? agg.wager : res.wager, won = (reps > 1 ? agg.ret : res.ret) - wagered;
+  if (wagered > 0) { if (won > 0) Sound.win(won >= wagered * 5); else if (won < 0) Sound.lose(); }
   status(stopMsg, stopMsg ? "warn" : "");
   save();
 }
@@ -908,6 +916,92 @@ function drawWheel() {
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, br, 0, TAU); ctx.fill();
   }
 }
+/* ---------- sound ---------- */
+// Every sound is synthesized with the Web Audio API, so the page needs no audio files.
+// Browsers only allow audio after the first tap or click, so the engine starts on the first interaction.
+const Sound = (() => {
+  let ac = null, out = null, noise = null;
+  function ctx() {
+    if (!S.sound) return null;
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+      try { ac = new AC(); } catch (e) { return null; }
+      out = ac.createGain(); out.gain.value = 0.7; out.connect(ac.destination);
+      noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ac.state === "suspended") ac.resume().catch(() => {});
+    return ac;
+  }
+  // One enveloped oscillator note.
+  function tone(t, freq, dur, {type = "sine", gain = 0.2, to = null} = {}) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.02);
+  }
+  // A burst of filtered noise: clicks, clacks and rumbles.
+  function hiss(t, dur, {freq = 2000, q = 1, gain = 0.2, type = "bandpass", attack = 0.002} = {}) {
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noise; s.loop = true;
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.02);
+    return f;
+  }
+  return {
+    unlock() { ctx(); },
+    // Roulette: the ball rolling on the track and the wheel turning, both fading as they slow.
+    wheel(sec) {
+      if (!ctx()) return; const t = ac.currentTime;
+      const roll = hiss(t, sec * 0.72, {freq: 3200, q: 0.8, gain: 0.05, attack: 0.15});
+      roll.frequency.exponentialRampToValueAtTime(1300, t + sec * 0.72);
+      const rumble = hiss(t, sec, {freq: 240, q: 0.7, gain: 0.1, type: "lowpass", attack: 0.2});
+      rumble.frequency.exponentialRampToValueAtTime(80, t + sec);
+    },
+    // Roulette: the ball striking a fret between pockets.
+    fret(strength) {
+      if (!ctx()) return; const t = ac.currentTime;
+      hiss(t, 0.03, {freq: 3600 + Math.random() * 1400, q: 4, gain: 0.17 * strength});
+      tone(t, 1800 + Math.random() * 500, 0.025, {type: "triangle", gain: 0.03 * strength});
+    },
+    // Roulette: the ball dropping into its pocket.
+    settle() {
+      if (!ctx()) return; const t = ac.currentTime;
+      hiss(t, 0.07, {freq: 2300, q: 2, gain: 0.24});
+      hiss(t + 0.08, 0.04, {freq: 2900, q: 3, gain: 0.08});
+    },
+    // Craps: dice rattled in the hand, then thrown, bouncing and tumbling to a stop.
+    dice(sec) {
+      if (!ctx()) return; const t0 = ac.currentTime, shake = sec * 0.55, k = Math.min(1, sec / 1.1);
+      for (let t = 0; t < shake; t += 0.045 + Math.random() * 0.05) hiss(t0 + t, 0.03, {freq: 1500 + Math.random() * 900, q: 3, gain: 0.07 + Math.random() * 0.05});
+      [0, 0.13, 0.22, 0.28, 0.32].forEach((d, i) => {
+        const at = t0 + shake + d * k, g = 0.32 * Math.pow(0.7, i);
+        hiss(at, 0.05, {freq: 3000 + Math.random() * 1500, q: 2.5, gain: g});
+        hiss(at + 0.014, 0.035, {freq: 5000 + Math.random() * 800, q: 4, gain: g * 0.6});
+      });
+    },
+    // A rising chime for a win; a longer run with sparkle for a big one.
+    win(big) {
+      if (!ctx()) return; const t = ac.currentTime;
+      const notes = big ? [784, 988, 1175, 1568, 1976, 2349] : [1047, 1319, 1568];
+      notes.forEach((f, i) => { tone(t + i * 0.075, f, 0.5, {type: "triangle", gain: 0.11}); tone(t + i * 0.075, f * 2, 0.3, {gain: 0.03}); });
+      if (big) for (let i = 0; i < 8; i++) tone(t + 0.45 + i * 0.06, 2600 + Math.random() * 1400, 0.12, {gain: 0.035});
+    },
+    // A soft, low two-note fall for a loss.
+    lose() {
+      if (!ctx()) return; const t = ac.currentTime;
+      tone(t, 294, 0.28, {gain: 0.13, to: 262});
+      tone(t + 0.2, 220, 0.45, {gain: 0.12, to: 175});
+    },
+    // A short tick to confirm sound was turned on.
+    blip() { if (!ctx()) return; tone(ac.currentTime, 1319, 0.12, {type: "triangle", gain: 0.08}); }
+  };
+})();
+document.addEventListener("pointerdown", () => Sound.unlock(), {passive: true});
+document.addEventListener("keydown", () => Sound.unlock());
+
 const normAng = a => { a = (a + Math.PI) % TAU; if (a < 0) a += TAU; return a - Math.PI; };
 function animateTo(n, dur) {
   return new Promise(done => {
@@ -917,6 +1011,7 @@ function animateTo(n, dur) {
     const r1 = r0 + (long ? 4 : 1) * TAU + d;
     const ballTurns = long ? 7 : 2, track = 0.865, pocketR = 0.635;
     const t0 = performance.now();
+    let lastFret = null, lastTick = 0, settled = false;
     function frame(now) {
       const t = Math.min(1, (now - t0) / dur);
       S.rot = r0 + (r1 - r0) * (1 - Math.pow(1 - t, 3));
@@ -927,7 +1022,14 @@ function animateTo(n, dur) {
       else if (t < d1) {
         const p = (t - d0) / (d1 - d0), sm = p * p * (3 - 2 * p);
         S.ball = {a: freeA + normAng(pocketA - freeA) * sm, r: track + (pocketR - track) * p + Math.abs(Math.sin(p * Math.PI * 3)) * 0.03 * (1 - p)};
-      } else S.ball = {pocket: k};
+        // The ball clicks each time it crosses a fret between pockets, softer as it slows.
+        const fret = Math.floor(normAng(S.ball.a - S.rot) / SEG);
+        if (lastFret !== null && fret !== lastFret && now - lastTick > 28) { Sound.fret(1 - p * 0.6); lastTick = now; }
+        lastFret = fret;
+      } else {
+        S.ball = {pocket: k};
+        if (!settled) { settled = true; Sound.settle(); }
+      }
       drawWheel();
       if (t < 1) requestAnimationFrame(frame);
       else { S.rot = ((S.rot % TAU) + TAU) % TAU; S.ball = {pocket: k}; drawWheel(); done(); }
@@ -989,6 +1091,8 @@ function updateButtons() {
   $("btnRebet").disabled = !S.lastBets;
   $("btnDouble").disabled = !t;
   $("quick").checked = S.quick;
+  $("btnSound").textContent = S.sound ? "Sound on" : "Sound off";
+  $("btnSound").setAttribute("aria-pressed", String(S.sound));
   $("mSpin").textContent = reps > 1 ? `Spin ×${reps}` : "Spin";
   renderMbar();
   renderPresets();
@@ -1246,6 +1350,7 @@ $("btnRebet").addEventListener("click", rebet);
 $("btnDouble").addEventListener("click", doubleBets);
 $("repeat").addEventListener("change", updateButtons);
 $("quick").addEventListener("change", e => { S.quick = e.target.checked; save(); });
+$("btnSound").addEventListener("click", () => { S.sound = !S.sound; updateButtons(); save(); Sound.blip(); });
 $("window").addEventListener("change", e => { S.win = e.target.value; renderHotCold(); renderMix(); save(); });
 $("rebuyForm").addEventListener("submit", e => {
   e.preventDefault();
