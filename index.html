@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#082419">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Casino Sims">
+<title>Casino Sims</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/hub-180.png">
+<link rel="icon" type="image/png" href="icons/hub-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=Bodoni+Moda:opsz,wght@6..96,700&display=swap">
+<style>
+/* Layout: a short felt lobby with one card per table game. */
+:root{
+  color-scheme: dark;
+  --page:#082419; --panel:#0c3022; --panel-2:#123d2c; --ink:#f2ebd9; --muted:#a7bba9;
+  --line-soft:rgba(242,235,217,.18); --brass:#d6ae5a;
+  --f-display:"Bodoni Moda", "Didot", Georgia, serif;
+  --f-body:"Barlow", system-ui, -apple-system, sans-serif;
+  --f-label:"Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-text-size-adjust:100%;
+  background-image:radial-gradient(ellipse at 50% -10%, rgba(214,174,90,.12), transparent 60%);min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding-block:40px 48px;
+  padding-left:max(20px, env(safe-area-inset-left,0px));padding-right:max(20px, env(safe-area-inset-right,0px))}
+h1{margin:0;font:700 34px/1.1 var(--f-display);text-wrap:balance}
+.lede{margin:8px 0 28px;color:var(--muted);font:500 14px/1.4 var(--f-label);letter-spacing:.06em;text-transform:uppercase}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.game{display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:14px;background:var(--panel);border:1px solid var(--line-soft);
+  color:inherit;text-decoration:none;transition:border-color .15s, transform .15s}
+.game:hover,.game:focus-visible{border-color:var(--brass);transform:translateY(-2px);outline:none}
+.game img{width:72px;height:72px;border-radius:16px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.game h2{margin:0;font:700 22px/1.2 var(--f-display)}
+.game p{margin:0;color:var(--muted);font-size:14px}
+.go{margin-top:auto;font:600 13px/1 var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+.howto{margin-top:32px;padding:16px 18px;border-radius:12px;border:1px dashed var(--line-soft);font-size:14px;color:var(--muted)}
+.howto h3{margin:0 0 6px;font:600 12px/1.2 var(--f-label);letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+.howto p{margin:0}
+@media (display-mode: standalone){.howto{display:none}}
+@media (max-width:520px){.games{grid-template-columns:1fr} h1{font-size:28px}}
+@media (prefers-reduced-motion:reduce){.game{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Casino Sims</h1>
+  <p class="lede">Practice tables with true odds and fair dice</p>
+  <div class="games">
+    <a class="game" href="roulette/">
+      <img src="icons/roulette-180.png" alt="">
+      <h2>Double Zero Roulette</h2>
+      <p>American wheel with 0 and 00. Inside and outside bets, saved bet layouts, hot and cold numbers, and the last 20 spins.</p>
+      <span class="go">Open table</span>
+    </a>
+    <a class="game" href="craps/">
+      <img src="icons/craps-180.png" alt="">
+      <h2>Hard Eight Craps</h2>
+      <p>Standard US layout. Line, come, odds, place, field, hardway and one-roll bets, paid in whole dollars.</p>
+      <span class="go">Open table</span>
+    </a>
+  </div>
+  <section class="howto">
+    <h3>Put it on your iPhone</h3>
+    <p>In Safari, tap Share, then Add to Home Screen. Add this page for one icon with both games, or open a game first to give it its own icon. Your bankroll and history stay on this device.</p>
+  </section>
+</main>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
