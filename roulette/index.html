@@ -256,6 +256,17 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .drag-ghost[data-label]:not([data-label=""])::after{content:attr(data-label);position:absolute;top:44px;left:50%;transform:translateX(-50%);white-space:nowrap;
   padding:4px 8px;border-radius:4px;background:var(--page);border:1px solid var(--line-soft);font:600 11px/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
 .drag-ghost.remove::after{color:var(--loss)!important;border-color:var(--loss)!important}
+/* wheel or dice brought over the page for the spin or roll */
+.stage-ov{position:fixed;inset:0;z-index:45;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  padding:max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background:rgba(3,14,10,.8);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .18s}
+.stage-ov.open{opacity:1}
+.stage-slot{width:min(84vw,380px)}
+.stage-slot .wheel-box{max-width:none}
+.stage-slot .dice-stage{box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.stage-note{margin:0;min-height:1.3em;font:600 22px/1.25 var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);text-align:center;text-wrap:balance}
+.stage-note.pos{color:var(--gain)} .stage-note.neg{color:var(--loss)}
+@media (prefers-reduced-motion:reduce){.stage-ov{transition:none}}
 .mbar{display:none}
 .hint-phone{display:none}
 
@@ -433,6 +444,11 @@ body.dragging,body.dragging *{cursor:grabbing!important}
       </div>
     </article>
   </section>
+</div>
+
+<div class="stage-ov" id="stageOv" hidden aria-live="polite">
+  <div class="stage-slot" id="stageSlot"></div>
+  <p class="stage-note" id="stageNote"></p>
 </div>
 
 <div class="mbar" id="mbar">
@@ -805,6 +821,7 @@ async function spin() {
   S.spinning = true; setBusy(true); status(reps > 1 ? `Running ${reps} spins...` : "No more bets.");
   let n = null, res = null, stopMsg = "";
   const agg = {spins: 0, wager: 0, ret: 0};
+  const overlay = reps === 1 ? stageOverlay(document.querySelector(".wheel-box")) : null;
   for (let i = 0; i < reps; i++) {
     if (i > 0 && tTotal > 0) {
       if (S.session.balance < tTotal) { stopMsg = `Stopped after ${i} spins. Your bankroll of ${money(S.session.balance)} cannot cover the ${money(tTotal)} layout.`; break; }
@@ -828,6 +845,10 @@ async function spin() {
   if (reps === 1) flashWinners(res);
   const wagered = reps > 1 ? agg.wager : res.wager, won = (reps > 1 ? agg.ret : res.ret) - wagered;
   if (wagered > 0) { if (won > 0) Sound.win(won >= wagered * 5); else if (won < 0) Sound.lose(); }
+  if (overlay) {
+    const color = colorOf(n).charAt(0).toUpperCase() + colorOf(n).slice(1);
+    await overlay.finish(`${lab(n)} ${color} · ${$("result").querySelector(".rnet").textContent}`, pnClass(won));
+  }
   status(stopMsg, stopMsg ? "warn" : "");
   save();
 }
@@ -916,6 +937,37 @@ function drawWheel() {
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, br, 0, TAU); ctx.fill();
   }
 }
+/* ---------- spin and roll overlay ---------- */
+// When the wheel or dice are scrolled out of view, they come up over the page for the spin or roll,
+// show the result, then go back to their place. Returns null when they are already on screen.
+function stageOverlay(node) {
+  const r = node.getBoundingClientRect(), seen = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+  if (seen >= r.height * 0.75) return null;
+  const ov = $("stageOv"), slot = $("stageSlot"), note = $("stageNote");
+  const hold = el("div"); hold.style.height = node.offsetHeight + "px";
+  node.before(hold); slot.appendChild(node);
+  note.textContent = ""; note.className = "stage-note";
+  ov.hidden = false;
+  requestAnimationFrame(() => ov.classList.add("open"));
+  return {
+    // Shows the result line, then closes after a moment or on the first tap or key press.
+    finish(text, cls) {
+      note.textContent = text; note.className = "stage-note" + (cls ? " " + cls : "");
+      return new Promise(done => {
+        let open = true;
+        const close = () => {
+          if (!open) return; open = false;
+          clearTimeout(timer); ov.removeEventListener("click", close); document.removeEventListener("keydown", close);
+          ov.classList.remove("open");
+          setTimeout(() => { hold.replaceWith(node); ov.hidden = true; done(); }, reduceMotion ? 0 : 180);
+        };
+        const timer = setTimeout(close, 1600);
+        ov.addEventListener("click", close); document.addEventListener("keydown", close);
+      });
+    }
+  };
+}
+
 /* ---------- sound ---------- */
 // Every sound is synthesized with the Web Audio API, so the page needs no audio files.
 // Browsers only allow audio after the first tap or click, so the engine starts on the first interaction.
