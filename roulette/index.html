@@ -265,7 +265,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .stage-slot .wheel-box{max-width:none}
 .stage-slot .dice-stage{box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .stage-note{margin:0;min-height:1.3em;font:600 22px/1.25 var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);text-align:center;text-wrap:balance}
-.stage-note.pos{color:var(--gain)} .stage-note.neg{color:var(--loss)}
+.stage-note.pos{color:var(--gain)} .stage-note.neg{color:var(--loss)} .stage-note.hit{color:var(--brass)}
+.rnet.hit{color:var(--brass)}
 @media (prefers-reduced-motion:reduce){.stage-ov{transition:none}}
 .mbar{display:none}
 .hint-phone{display:none}
@@ -844,10 +845,11 @@ async function spin() {
   renderAll();
   if (reps === 1) flashWinners(res);
   const wagered = reps > 1 ? agg.wager : res.wager, won = (reps > 1 ? agg.ret : res.ret) - wagered;
-  if (wagered > 0) { if (won > 0) Sound.win(won >= wagered * 5); else if (won < 0) Sound.lose(); }
+  const hit = reps === 1 && res.winners.length > 0;
+  if (wagered > 0) { if (won > 0) Sound.win(won >= wagered * 5); else if (hit) Sound.win(false); else if (won < 0) Sound.lose(); }
   if (overlay) {
     const color = colorOf(n).charAt(0).toUpperCase() + colorOf(n).slice(1);
-    await overlay.finish(`${lab(n)} ${color} · ${$("result").querySelector(".rnet").textContent}`, pnClass(won));
+    await overlay.finish(`${lab(n)} ${color} · ${$("result").querySelector(".rnet").textContent}`, hit && won <= 0 ? "hit" : pnClass(won));
   }
   status(stopMsg, stopMsg ? "warn" : "");
   save();
@@ -1168,20 +1170,25 @@ function showResult(n, res, agg) {
     box.innerHTML = `<span class="pk big empty">?</span><div class="rinfo"><div class="rtags">Ready</div><div class="rnet">Place your chips</div><div class="rwins">Pick a chip below and click the layout, then spin.</div></div>`;
     return;
   }
-  let net, line, wins;
+  let net, line, wins, cls;
   if (agg) {
     net = agg.ret - agg.wager;
     line = agg.wager ? (net > 0 ? `Up ${money(net)}` : net < 0 ? `Down ${money(-net)}` : "Even") : "No bets placed";
     wins = `${agg.spins} spins · wagered ${money(agg.wager)} · returned ${money(agg.ret)}. Last number shown.`;
   } else {
     net = res.ret - res.wager;
-    line = !res.wager ? "No bets placed" : net > 0 ? `Won ${money(net)}` : net < 0 ? `Lost ${money(-net)}` : "Push";
+    // A bet that hits is never announced as a plain loss, even when the rest of the layout costs more than it pays.
+    const hit = res.winners.length > 0;
+    line = !res.wager ? "No bets placed" : net > 0 ? `Won ${money(net)}`
+      : hit ? (net < 0 ? `Hit · down ${money(-net)} overall` : "Hit · broke even")
+      : net < 0 ? `Lost ${money(-net)}` : "Push";
+    cls = hit && net <= 0 ? "hit" : pnClass(net);
     if (res.winners.length) {
       const top = res.winners.slice().sort((a, b) => b.profit - a.profit);
       wins = top.slice(0, 4).map(w => `${betName(w.key)} pays ${money(w.profit)}`).join("; ") + (top.length > 4 ? `; ${top.length - 4} more` : "");
     } else wins = res.wager ? "No winning bets this spin." : "Spin recorded for tracking.";
   }
-  box.innerHTML = `<span class="pk big ${colorOf(n)}">${lab(n)}</span><div class="rinfo"><div class="rtags">${tags(n)}</div><div class="rnet ${pnClass(net)}">${line}</div><div class="rwins">${wins}</div></div>`;
+  box.innerHTML = `<span class="pk big ${colorOf(n)}">${lab(n)}</span><div class="rinfo"><div class="rtags">${tags(n)}</div><div class="rnet ${cls ?? pnClass(net)}">${line}</div><div class="rwins">${wins}</div></div>`;
 }
 function renderStrip() {
   const ol = $("strip"); ol.innerHTML = "";
