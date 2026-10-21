@@ -267,6 +267,23 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 }
 /* take back mode, $6 prompt, phone bar */
 button,.bet{touch-action:manipulation}
+/* bonus bets */
+.bonus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--felt);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.bonus .bet{min-height:84px;gap:6px;padding:8px 6px;border-bottom:0;border-right:1px solid var(--line-soft)}
+.bonus .bet:last-child{border-right:0}
+.bonus .bname{font:700 16px/1 var(--f-display);letter-spacing:.02em;text-transform:none;color:var(--ink)}
+.bonus .pay{font:600 12px/1 var(--f-label);letter-spacing:.06em;color:var(--brass)}
+.bonus .track{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}
+.bonus .track i{font:600 11px/1 var(--f-label);font-style:normal;letter-spacing:0;min-width:19px;padding:3px 2px;border-radius:3px;border:1px solid var(--line-soft);color:var(--muted);font-variant-numeric:tabular-nums}
+.bonus .track i.on{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
+.bonus .chip.solo{left:auto;right:6px;top:6px;margin:0}
+.bonus.closed .bet:not(:has(.chip)) .bname{opacity:.6}
+.bonus-state{font-variant-numeric:tabular-nums}
+@media (max-width:640px){
+  .bonus .bname{font-size:13px;padding-inline:18px} .bonus .track i{min-width:16px;font-size:10px}
+  .bonus .chip.solo{right:2px;top:2px;width:24px;height:24px;font-size:9px}
+  .props-head .sub.bonus-state{display:inline}
+}
 /* next roll strip */
 .nextroll{display:flex;flex-direction:column;gap:6px}
 .nr-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -413,6 +430,11 @@ body.dragging,body.dragging *{cursor:grabbing!important}
         <span class="sub">Hardways stay up until a 7 or the easy way. The rest are one-roll bets.</span>
       </div>
       <div class="props" id="props"></div>
+      <div class="props-head">
+        <h2 class="label-row" style="font:600 13px/1.2 var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--brass)">Bonus bets</h2>
+        <span class="sub bonus-state" id="bonusState"></span>
+      </div>
+      <div class="bonus" id="bonus"></div>
       <p class="hint">Bet the Pass Line or Don't Pass on the come-out. Once a point is set, click the odds spot behind your line bet, use Come and Don't Come, and click a come bet's strip in its number box to add odds. Click a number for a place bet. Drag a stack to another bet to move it, or off the table to take it back; on a phone, press and hold the chips first. Right-click a bet to take back one chip.</p>
       <div class="rack">
         <div class="chips" id="chips" role="radiogroup" aria-label="Chip value"></div>
@@ -512,6 +534,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
             <tr><td>Ace-deuce (3) or Yo (11)</td><td>That total (one roll)</td><td class="r">15 to 1</td><td class="r">11.11%</td></tr>
             <tr><td>Aces (2) or Boxcars (12)</td><td>That total (one roll)</td><td class="r">30 to 1</td><td class="r">13.89%</td></tr>
             <tr><td>Any 7</td><td>7 (one roll)</td><td class="r">4 to 1</td><td class="r">16.67%</td></tr>
+            <tr><td>All Small (bonus)</td><td>2, 3, 4, 5 and 6 all before a 7</td><td class="r">34 to 1</td><td class="r">7.76%</td></tr>
+            <tr><td>All Tall (bonus)</td><td>8, 9, 10, 11 and 12 all before a 7</td><td class="r">34 to 1</td><td class="r">7.76%</td></tr>
+            <tr><td>Make 'Em All (bonus)</td><td>All ten of those before a 7</td><td class="r">175 to 1</td><td class="r">7.46%</td></tr>
           </tbody>
         </table>
       </div>
@@ -638,12 +663,22 @@ meta("p2", "Aces", {keep: true});
 meta("p3", "Ace-deuce", {keep: true});
 meta("p11", "Yo", {keep: true});
 meta("p12", "Boxcars", {keep: true});
+// Bonus Craps side bets: roll every number in the set before a 7.
+const BONUS = {
+  allSmall: {label: "All Small", nums: [2, 3, 4, 5, 6], pays: 34},
+  allTall: {label: "All Tall", nums: [8, 9, 10, 11, 12], pays: 34},
+  makeAll: {label: "Make 'Em All", nums: [2, 3, 4, 5, 6, 8, 9, 10, 11, 12], pays: 175}
+};
+for (const k in BONUS) meta(k, BONUS[k].label, {keep: true});
+const bonusHitsOf = ses => ses.bonusHits || [];
+const bonusHits = () => bonusHitsOf(S.session);
 
 /* ---------- state ---------- */
 function makeSession(bank, min, odds) {
   return {id: Date.now(), started: new Date().toISOString(), start: bank, buyIn: bank, rack: bank, tableMin: min, odds: odds,
     rolls: [], action: 0, won: 0, lost: 0, best: null, worst: null,
-    hand: 0, longest: 0, shooters: 1, pointsSet: 0, pointsMade: 0, sevenOuts: 0, naturals: 0, craps: 0};
+    hand: 0, longest: 0, shooters: 1, pointsSet: 0, pointsMade: 0, sevenOuts: 0, naturals: 0, craps: 0,
+    bonusHits: [], bonusWins: 0};
 }
 const S = {session: makeSession(500, 10, "345"), past: [], chip: 10, bets: {}, point: null, undo: [],
   keep: false, working: false, prompts: true, quick: false, sound: true, rolling: false, win: "all"};
@@ -694,6 +729,7 @@ function room(key) {
     return {cap: r2(maxOdds(flat, n, m[1] === "dcOdds") - (b[key] || 0)), max: true};
   }
   if (/^(come|dc)\d+$/.test(key)) return {msg: "Come bets move to their number on their own."};
+  if (BONUS[key] && bonusHits().length) return {msg: "Bonus bets go down before the first roll after a 7. They open again after the next 7."};
   return {cap: Infinity};
 }
 function locked(key) {
@@ -701,11 +737,12 @@ function locked(key) {
   if (/^come\d+$/.test(key)) return "A come bet on a number is a contract bet and stays up.";
   if ((key === "dp" && B().dpOdds) || (/^dc\d+$/.test(key) && B()["dcOdds" + key.slice(2)])) return "Take down the odds first.";
   if (key === "pass" && B().passOdds) return "Take down the odds first.";
+  if (BONUS[key] && bonusHits().length) return "Bonus bets stay up until they win or a 7 rolls.";
   return null;
 }
 
 /* ---------- layout ---------- */
-const layout = $("layout"), props = $("props");
+const layout = $("layout"), props = $("props"), bonusEl = $("bonus");
 const host = {}; // bet key -> element its chip sits in
 const slot = {}; // bet key -> chip position class
 function betBtn(key, cls, html, aria) {
@@ -748,6 +785,13 @@ function buildLayout() {
   pr("any7", [1, 6], "4 to 1", "Any 7"); pr("anycraps", [1, 1], "7 to 1", "Any craps");
   pr("p2", [1, 1], "30 to 1", "Aces"); pr("p3", [1, 2], "15 to 1", "Ace-deuce");
   pr("p11", [5, 6], "15 to 1", "Yo 11"); pr("p12", [6, 6], "30 to 1", "Boxcars");
+
+  for (const k in BONUS) {
+    const d = BONUS[k];
+    bonusEl.appendChild(betBtn(k, "bonus-bet",
+      `<span class="bname">${d.label}</span><span class="pay">${d.pays} to 1</span><span class="track">${d.nums.map(n => `<i data-n="${n}">${n}</i>`).join("")}</span>`,
+      `${d.label}: roll ${d.nums.join(", ")} before a 7, pays ${d.pays} to 1`));
+  }
 }
 
 /* ---------- betting ---------- */
@@ -1032,6 +1076,16 @@ function settle(a, c) {
     S.point = null; tag = "X"; ses.sevenOuts++;
   }
 
+  // Bonus bets: any 7 ends them and resets the tracker; otherwise mark the number and pay any completed set.
+  // The tracker array is replaced rather than changed, so a preview on a copied session leaves the real one alone.
+  if (s === 7) {
+    for (const k in BONUS) if (has(k)) lose(k);
+    ses.bonusHits = [];
+  } else {
+    if (!bonusHitsOf(ses).includes(s)) ses.bonusHits = [...bonusHitsOf(ses), s];
+    for (const k in BONUS) if (has(k) && BONUS[k].nums.every(n => ses.bonusHits.includes(n))) { win(k, b[k] * BONUS[k].pays); ses.bonusWins = (ses.bonusWins || 0) + 1; }
+  }
+
   // bookkeeping
   let net = 0, action = 0;
   for (const e of ev) {
@@ -1137,7 +1191,7 @@ $("moveStay").addEventListener("click", () => { const pt = $("moveDlg").dataset.
 $("moveDown").addEventListener("click", takeDownMoved);
 $("moveDlg").addEventListener("click", e => { if (e.target === e.currentTarget) $("moveStay").click(); });
 function setBusy(b) {
-  layout.classList.toggle("busy", b); props.classList.toggle("busy", b);
+  layout.classList.toggle("busy", b); props.classList.toggle("busy", b); bonusEl.classList.toggle("busy", b);
   document.querySelectorAll(".controls button, .rack button, #btnNew, #mRoll").forEach(x => x.disabled = b);
   if (!b) updateButtons();
 }
@@ -1317,6 +1371,15 @@ function renderChips() {
   }
   $("pointLine").textContent = S.point == null ? "Come-out roll" : `Point is ${S.point}`;
   renderNext();
+  renderBonus();
+}
+// Light up the numbers rolled since the last 7, and say whether bonus bets can go down.
+function renderBonus() {
+  const hits = bonusHits();
+  bonusEl.querySelectorAll(".track i").forEach(i => i.classList.toggle("on", hits.includes(+i.dataset.n)));
+  const open = !hits.length;
+  bonusEl.classList.toggle("closed", !open);
+  $("bonusState").textContent = open ? "Open: bet before the next roll" : `Closed until the next 7 · ${hits.length} of 10 numbers rolled`;
 }
 // Net result of one roll on the current bets, worked out on a copy so nothing on the table changes.
 function previewNet(a, c) {
@@ -1510,9 +1573,9 @@ const drag = {key: null, el: null, active: false, ghost: null, target: null, x: 
 function dragTargetAt(x, y) {
   const at = document.elementFromPoint(x, y);
   if (!at) return {kind: "remove"};
-  const b = at.closest("#layout [data-bet], #props [data-bet]");
+  const b = at.closest("#layout [data-bet], #props [data-bet], #bonus [data-bet]");
   if (b) return {kind: "bet", key: b.dataset.bet, el: b};
-  return at.closest(".layout-scroll, .props") ? {kind: "none"} : {kind: "remove"};
+  return at.closest(".layout-scroll, .props, .bonus") ? {kind: "none"} : {kind: "remove"};
 }
 function beginDrag() {
   const why = locked(drag.key);
@@ -1555,7 +1618,7 @@ function pickUp(target, x, y) {
   const key = stackAt(b.dataset.bet); if (!key) return false;
   drag.key = key; drag.el = b; drag.x = x; drag.y = y; return true;
 }
-for (const root of [layout, props]) {
+for (const root of [layout, props, bonusEl]) {
   root.addEventListener("pointerdown", e => { if (e.pointerType !== "touch" && e.button === 0) pickUp(e.target, e.clientX, e.clientY); });
   root.addEventListener("touchstart", e => {
     if (e.touches.length !== 1) return;
@@ -1583,8 +1646,8 @@ $("fixCancel").addEventListener("click", keepBetting);
 $("fixDlg").addEventListener("click", e => { if (e.target === e.currentTarget) keepBetting(); });
 $("mRoll").addEventListener("click", roll);
 function onBetMenu(e) { const b = e.target.closest("[data-bet]"); if (b) { e.preventDefault(); takeBack(b.dataset.bet); } }
-layout.addEventListener("click", onBetClick); props.addEventListener("click", onBetClick);
-layout.addEventListener("contextmenu", onBetMenu); props.addEventListener("contextmenu", onBetMenu);
+layout.addEventListener("click", onBetClick); props.addEventListener("click", onBetClick); bonusEl.addEventListener("click", onBetClick);
+layout.addEventListener("contextmenu", onBetMenu); props.addEventListener("contextmenu", onBetMenu); bonusEl.addEventListener("contextmenu", onBetMenu);
 $("chips").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; S.chip = +b.dataset.v; renderRack(); save(); });
 $("customForm").addEventListener("submit", e => {
   e.preventDefault();
