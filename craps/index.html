@@ -1355,7 +1355,7 @@ function renderLedger() {
   $("stMin").textContent = `${money(s.tableMin)} · ${oddsLabel(s.odds)}`;
 }
 function renderChips() {
-  document.querySelectorAll(".layout .chip:not(.won), .props .chip:not(.won), .puck").forEach(c => c.remove());
+  document.querySelectorAll(".layout .chip:not(.won), .props .chip:not(.won), .bonus .chip:not(.won), .puck").forEach(c => c.remove());
   for (const k in B()) {
     const h = host[k]; if (!h) continue;
     const amt = B()[k];
