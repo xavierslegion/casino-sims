@@ -1,22 +1,25 @@
 # Casino Sims
 
-Two practice table games that run in the browser and install on an iPhone Home Screen:
+Three practice table games that run in the browser and install on an iPhone Home Screen:
 
 - **Double Zero Roulette** (`roulette/`): American wheel with 0 and 00.
 - **Hard Eight Craps** (`craps/`): standard US layout.
+- **Face Up Pai Gow** (`paigow/`): Pai Gow Poker with the dealer's hand face up.
 
 Everything is static HTML, so GitHub Pages can host it for free. Your bankroll and history are saved on each device in that browser's storage and never leave it.
 
 ## Folder layout
 
 ```
-index.html               Lobby page that links to both games
+index.html               Lobby page that links to every game
 manifest.webmanifest     App settings for the lobby (name, icon, full screen)
 sw.js                    Offline support
 roulette/index.html      The roulette game
 roulette/manifest.webmanifest
 craps/index.html         The craps game
 craps/manifest.webmanifest
+paigow/index.html        The pai gow game
+paigow/manifest.webmanifest
 icons/                   App icons (180, 192 and 512 px)
 .nojekyll                Tells GitHub Pages to serve the files as they are
 ```
