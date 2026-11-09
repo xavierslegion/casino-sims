@@ -123,7 +123,15 @@ button.card:disabled{cursor:default}
 .side.done .hand.lost .card{filter:brightness(.72)}
 
 /* middle */
-.middle{display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:center;gap:16px 18px;padding-block:6px;border-block:1px solid var(--line-soft)}
+.middle{display:grid;grid-template-columns:auto auto auto auto minmax(0,1fr);align-items:center;gap:12px 14px;padding-block:6px;border-block:1px solid var(--line-soft)}
+.meter{grid-column:1 / -1;order:-1;display:flex;align-items:baseline;justify-content:center;gap:10px;padding:6px 10px;border-radius:8px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(214,174,90,.45)}
+.meter .mlabel{font:600 12px/1 var(--f-label);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.meter .mamt{font:700 24px/1 var(--f-display);color:var(--brass);font-variant-numeric:tabular-nums}
+.circle.jack .chip{--chip:#e2a827}
+.verdict .vb{display:flex;flex-direction:column;gap:2px}
+.verdict .vb span{display:block}
+.verdict .vb span.pos{color:var(--gain)} .verdict .vb span.neg{color:var(--loss)}
 .circle.fortune{width:78px;height:78px;border-color:var(--brass);border-style:dashed}
 .circle.fortune .lbl{color:var(--brass)}
 .circle.fortune .chip{width:36px;height:36px;margin:-24px 0 0 -18px;font-size:11px}
@@ -131,7 +139,8 @@ button.card:disabled{cursor:default}
 .verdict .vb:empty{display:none}
 .verdict .vb.pos{color:var(--gain)} .verdict .vb.neg{color:var(--loss)}
 .paytable{width:100%;border-collapse:collapse;font-size:14px}
-.paytable td{padding:6px 10px;border-bottom:1px solid var(--line-soft)}
+.paytable td{padding:6px 10px;border-bottom:1px solid var(--line-soft);white-space:normal}
+.circle .amt.side{font:600 9px/1 var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
 .paytable tr.hit td{background:rgba(214,174,90,.18);color:var(--ink);font-weight:600}
 .paytable tr.hit td:first-child{box-shadow:inset 3px 0 0 var(--brass)}
 .circle{position:relative;width:96px;height:96px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;background:rgba(0,0,0,.12);cursor:pointer;padding:0}
@@ -181,7 +190,7 @@ input[type=number],select{background:var(--panel);border:1px solid var(--line-so
 .panels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;margin-top:32px}
 .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:10px;padding:18px;min-width:0;display:flex;flex-direction:column;gap:14px}
 .panel h2,.label-row h2{font:600 13px/1.2 var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
-.p-sess{grid-column:span 5} .p-hist{grid-column:span 7} .p-fortune{grid-column:span 5} .p-past{grid-column:span 7} .p-rules{grid-column:span 12}
+.p-sess{grid-column:span 5} .p-hist{grid-column:span 7} .p-fortune{grid-column:span 5} .p-side{grid-column:span 7} .p-past{grid-column:span 12} .p-rules{grid-column:span 12}
 .label-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .sub{font-size:12px;color:var(--muted)}
 .spark{width:100%;height:auto;display:block}
@@ -224,7 +233,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 .mbar{display:none}
 
 @media (max-width:960px){
-  .p-sess,.p-hist,.p-fortune,.p-past{grid-column:span 12}
+  .p-sess,.p-hist,.p-fortune,.p-side,.p-past{grid-column:span 12}
   .rules{grid-template-columns:1fr}
 }
 @media (max-width:640px){
@@ -237,9 +246,13 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
   .table{padding:16px 12px;gap:14px;margin:9px 4px}
   .hands{grid-template-columns:1fr;gap:10px}
   .row{gap:4px}
-  .middle{grid-template-columns:auto auto minmax(0,1fr);gap:12px}
+  .middle{grid-template-columns:auto auto auto auto minmax(0,1fr);gap:10px}
   .middle .verdict{grid-column:1 / -1}
-  .circle.fortune{width:66px;height:66px}
+  .circle.fortune{width:62px;height:62px}
+  .circle.fortune .chip{width:30px;height:30px;margin:-20px 0 0 -15px;font-size:10px}
+  .circle.fortune .lbl{font-size:9px;letter-spacing:.08em}
+  .middle{gap:10px}
+  .meter .mamt{font-size:20px}
   .circle{width:78px;height:78px}
   .verdict .vh{font-size:18px}
   .rchip{width:42px;height:42px;font-size:13px}
@@ -295,7 +308,10 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 
       <div class="middle">
         <button class="circle" id="circle" type="button" aria-label="Bet circle: add a chip"><span class="lbl">Bet</span></button>
+        <div class="meter" aria-live="polite"><span class="mlabel">Jackpot</span><span class="mamt" id="meterAmt"></span></div>
         <button class="circle fortune" id="fcircle" type="button" aria-label="Fortune Bonus circle: add a chip"><span class="lbl">Fortune</span></button>
+        <button class="circle fortune" id="acircle" type="button" aria-label="Ace-High bonus circle: add a chip"><span class="lbl">Ace-High</span></button>
+        <button class="circle fortune jack" id="jcircle" type="button" aria-label="Jackpot: turn the $1 bet on or off"><span class="lbl">Jackpot $1</span></button>
         <div class="verdict" id="verdict" aria-live="polite"><span class="vh"></span><span class="vd"></span><span class="vb" id="vb"></span></div>
       </div>
 
@@ -328,7 +344,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
       </form>
     </div>
     <p class="status" id="status" role="status"></p>
-    <p class="hint">Pick a chip and tap the bet circle, then deal. The dealer's hand is dealt face up and set first. Tap your cards to move them between your low hand (2 cards) and high hand (5 cards), then set your hand. Your high hand has to outrank your low hand.</p>
+    <p class="hint">Pick a chip and tap the bet circle, then deal. The dashed circles are side bets: tap Fortune or Ace-High to add chips, and tap Jackpot to turn the $1 bet on or off. The dealer's hand is dealt face up and set first. Tap your cards to move them between your low hand (2 cards) and high hand (5 cards), then set your hand. Your high hand has to outrank your low hand.</p>
   </main>
 
   <section class="panels">
@@ -354,6 +370,14 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
       <p class="sub" style="margin:0">Pays on your best hand from all seven cards, however you set them, whether the main bet wins, loses or pushes. Anything below a straight loses.</p>
     </article>
 
+    <article class="panel p-side">
+      <div class="label-row"><h2>Jackpot</h2><span class="sub">Meter <b id="jackMeter"></b></span></div>
+      <table class="paytable" id="jackTable"></table>
+      <p class="sub" style="margin:0">A $1 bet on your best hand from all seven cards. A quarter of every Jackpot bet you make goes into the meter, and hitting the full jackpot resets it to $25,000. Real tables grow the meter from every player; here it only grows from your own play. Paytable based on common casino jackpot tables.</p>
+      <div class="label-row" style="margin-top:4px"><h2>Ace-High bonus</h2><span class="sub" id="aceNow"></span></div>
+      <p class="sub" style="margin:0;font-size:14px;color:var(--ink)">Pays 9 to 1 when the dealer's seven cards are ace-high pai gow, the hand that pushes the main bet. That happens on about 9.4% of hands, a house edge near 6%.</p>
+    </article>
+
     <article class="panel p-past">
       <div class="label-row">
         <h2>Past sessions</h2>
@@ -373,7 +397,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
             <li>Lose both hands: you lose the bet.</li>
             <li>Ties on a hand (copies) go to the dealer.</li>
             <li>If the dealer's seven cards are ace-high pai gow (no pair, straight or flush, with an ace or the joker), every bet pushes.</li>
-            <li>The Fortune Bonus is a separate side bet, paid from its own paytable. It still pays when the main bet pushes.</li>
+            <li>The Fortune Bonus, Jackpot and Ace-High bonus are separate side bets, each paid from its own paytable. They still pay when the main bet pushes.</li>
           </ul>
         </div>
         <div>
@@ -607,6 +631,20 @@ const FORTUNE = [
   {id: "st", name: "Straight", pays: 2}
 ];
 const FORTUNE_BY_ID = Object.fromEntries(FORTUNE.map(f => [f.id, f]));
+
+/* ---------- Ace-High bonus and Jackpot ---------- */
+// Ace-High bonus: wins when the dealer's hand is ace-high pai gow, the hand that pushes the main bet.
+// About 9.4% of dealer hands qualify, so 9 to 1 leaves the house roughly a 6% edge.
+const ACE_HIGH_PAYS = 9;
+// Jackpot: a fixed $1 bet on your seven cards. A quarter of each bet grows the meter. Paid in whole dollars.
+const JACKPOT_BET = 1, JACKPOT_SEED = 25000, JACKPOT_CUT = 0.25;
+const JACKPOT = [
+  {id: "sf7n", pct: 100}, {id: "rm", pct: 10}, {id: "sf7j", pct: 10},
+  {id: "a5", amt: 500}, {id: "rf", amt: 250}, {id: "sf", amt: 100}, {id: "q", amt: 75}, {id: "fh", amt: 5}
+].map(j => Object.assign(j, {name: FORTUNE_BY_ID[j.id].name}));
+const JACKPOT_BY_ID = Object.fromEntries(JACKPOT.map(j => [j.id, j]));
+const jackpotWin = (j, meter) => j.pct ? Math.floor(meter * j.pct / 100) : j.amt;
+const jackpotPays = (j, meter) => j.pct ? `${j.pct}% of the meter (${money(jackpotWin(j, meter))})` : money(j.amt);
 // The paying Fortune hand in seven cards, or null.
 function fortuneHand(cards) {
   const nat = cards.filter(c => !c.j), jokers = cards.length - nat.length;
@@ -628,15 +666,19 @@ function fortuneHand(cards) {
 /* ---------- state ---------- */
 function makeSession(bank, min) {
   return {id: Date.now(), started: new Date().toISOString(), start: bank, buyIn: bank, rack: bank, tableMin: min,
-    hands: [], wagered: 0, best: null, fBets: 0, fHits: 0, fNet: 0};
+    hands: [], wagered: 0, best: null, fBets: 0, fHits: 0, fNet: 0, aBets: 0, aHits: 0, aNet: 0, jBets: 0, jHits: 0, jNet: 0};
 }
-const S = {session: makeSession(500, 10), past: [], chip: 10, bet: 10, fbet: 0, round: null, sound: true, preview: true};
-// Money on the felt for the hand in progress: main bet plus Fortune Bonus.
-const atRisk = () => S.round && S.round.phase === "set" ? S.round.bet + (S.round.fbet || 0) : 0;
+// The jackpot meter belongs to the table, not a session, so it carries across sessions.
+const S = {session: makeSession(500, 10), past: [], chip: 10, bet: 10, fbet: 0, abet: 0, jp: false, meter: JACKPOT_SEED, round: null, sound: true, preview: true};
+// Bets waiting for the next deal, and everything riding on a hand once it is dealt.
+const pendingTotal = () => S.bet + S.fbet + S.abet + (S.jp ? JACKPOT_BET : 0);
+const sideTotal = r => (r.fbet || 0) + (r.abet || 0) + (r.jp ? JACKPOT_BET : 0);
+const roundTotal = r => r.bet + sideTotal(r);
+const atRisk = () => S.round && S.round.phase === "set" ? roundTotal(S.round) : 0;
 // round: {phase: "set" | "done", bet, player: [cards], pLow: [ids], dealer: [cards], dLow: [ids], aceHigh, result}
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bet: S.bet, fbet: S.fbet, round: S.round, sound: S.sound, preview: S.preview})); } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, chip: S.chip, bet: S.bet, fbet: S.fbet, abet: S.abet, jp: S.jp, meter: S.meter, round: S.round, sound: S.sound, preview: S.preview})); } catch (e) {}
 }
 function load() {
   try {
@@ -647,6 +689,9 @@ function load() {
     S.chip = d.chip >= 1 ? Math.floor(d.chip) : 10;
     S.bet = d.bet >= 0 ? Math.floor(d.bet) : 0;
     S.fbet = d.fbet >= 0 ? Math.floor(d.fbet) : 0;
+    S.abet = d.abet >= 0 ? Math.floor(d.abet) : 0;
+    S.jp = !!d.jp;
+    S.meter = d.meter >= JACKPOT_SEED ? d.meter : JACKPOT_SEED;
     S.round = d.round && Array.isArray(d.round.player) && d.round.player.length === 7 ? d.round : null;
     S.sound = d.sound !== false; S.preview = d.preview !== false;
   } catch (e) {}
@@ -724,19 +769,20 @@ function setOf(cards, lowIds) {
 function deal() {
   const s = S.session, min = s.tableMin;
   if (S.bet < min) { status(`The table minimum is ${money(min)}. Tap the bet circle to add chips.`, "warn"); return; }
-  if (S.bet + S.fbet > s.rack) { status(`Your bets of ${money(S.bet + S.fbet)} are more than your bankroll of ${money(s.rack)}.`, "warn"); return; }
-  s.rack -= S.bet + S.fbet;
+  if (pendingTotal() > s.rack) { status(`Your bets of ${money(pendingTotal())} are more than your bankroll of ${money(s.rack)}.`, "warn"); return; }
+  s.rack -= pendingTotal();
+  if (S.jp) S.meter += JACKPOT_CUT;
   const deck = shuffledDeck(), player = [], dealer = [];
   for (let i = 0; i < 7; i++) { player.push(deck.pop()); dealer.push(deck.pop()); }
   player.sort(byRank); dealer.sort(byRank);
   const dset = houseWay(dealer);
-  S.round = {phase: "set", bet: S.bet, fbet: S.fbet, player, pLow: [], dealer, dLow: dset.lowIds, aceHigh: isAceHighPaiGow(dealer), result: null};
+  S.round = {phase: "set", bet: S.bet, fbet: S.fbet, abet: S.abet, jp: S.jp, player, pLow: [], dealer, dLow: dset.lowIds, aceHigh: isAceHighPaiGow(dealer), result: null};
   dealing = true;
   for (let i = 0; i < 14; i++) Sound.card(i * 0.06);
   renderAll(true);
   setTimeout(() => { dealing = false; }, reduceMotion ? 0 : 900);
   if (S.round.aceHigh) {
-    status("The dealer has ace-high pai gow, so this hand pushes no matter how you set yours.");
+    status("The dealer has ace-high pai gow, so this hand pushes no matter how you set yours." + (S.round.abet ? ` Your Ace-High bonus wins ${ACE_HIGH_PAYS} to 1.` : ""));
     setTimeout(() => settle(true), reduceMotion ? 0 : 1100);
   } else status("Tap two cards for your low hand, or use House way or Best play.");
   save();
@@ -769,25 +815,43 @@ function settle(auto) {
     res = outcome(p, setOf(r.dealer, r.dLow));
   }
   const mainNet = res.o * r.bet;
-  // Fortune Bonus stands on its own: it is decided by the seven cards, whatever happened to the main bet.
-  const fb = r.fbet || 0, fid = fb ? fortuneHand(r.player) : null, fNet = fb ? (fid ? fb * FORTUNE_BY_ID[fid].pays : -fb) : 0;
-  const net = mainNet + fNet;
-  s.rack += r.bet + mainNet + (fid ? fb + fNet : 0); s.wagered += r.bet + fb;
+  // Side bets stand on their own. Fortune and Jackpot are decided by your seven cards, Ace-High by the dealer's.
+  const seven = (r.fbet || r.jp) ? fortuneHand(r.player) : null;
+  const fb = r.fbet || 0, fid = fb ? seven : null, fNet = fb ? (fid ? fb * FORTUNE_BY_ID[fid].pays : -fb) : 0;
+  const ab = r.abet || 0, aWon = ab > 0 && r.aceHigh, aNet = ab ? (aWon ? ab * ACE_HIGH_PAYS : -ab) : 0;
+  const jt = r.jp && seven ? JACKPOT_BY_ID[seven] : null, jid = jt ? seven : null;
+  let jNet = 0;
+  if (r.jp) {
+    if (jt) {
+      jNet = jackpotWin(jt, S.meter);
+      // The full jackpot resets the meter to its seed; a 10% share comes off the meter, never below the seed.
+      S.meter = jt.pct === 100 ? JACKPOT_SEED : Math.max(JACKPOT_SEED, S.meter - (jt.pct ? jNet : 0));
+    } else jNet = -JACKPOT_BET;
+  }
+  const net = mainNet + fNet + aNet + jNet;
+  s.rack += r.bet + mainNet + (fid ? fb + fNet : 0) + (aWon ? ab + aNet : 0) + (jid ? JACKPOT_BET + jNet : 0);
+  s.wagered += roundTotal(r);
   if (fb) { s.fBets++; if (fid) s.fHits++; s.fNet = (s.fNet || 0) + fNet; }
+  if (ab) { s.aBets = (s.aBets || 0) + 1; if (aWon) s.aHits = (s.aHits || 0) + 1; s.aNet = (s.aNet || 0) + aNet; }
+  if (r.jp) { s.jBets = (s.jBets || 0) + 1; if (jid) s.jHits = (s.jHits || 0) + 1; s.jNet = (s.jNet || 0) + jNet; }
   if (net > 0 && (s.best == null || net > s.best)) s.best = net;
   const p = setOf(r.player, r.pLow), d = setOf(r.dealer, r.dLow);
-  s.hands.push({o: res.o, n: net, b: r.bet, fb, fid, fn: fNet, ah: !!res.aceHigh, ph: nameHigh(p.hk), pl: nameLow(p.lk), dh: nameHigh(d.hk), dl: nameLow(d.lk), p: s.rack - s.buyIn});
-  r.result = Object.assign(res, {net: mainNet, fid, fNet, total: net});
+  s.hands.push({o: res.o, n: net, b: r.bet, fb, fid, fn: fNet, ab, an: aNet, jp: !!r.jp, jid, jn: jNet, ah: !!res.aceHigh, ph: nameHigh(p.hk), pl: nameLow(p.lk), dh: nameHigh(d.hk), dl: nameLow(d.lk), p: s.rack - s.buyIn});
+  r.result = Object.assign(res, {net: mainNet, fid, fNet, aNet, jid, jNet, total: net});
   r.phase = "done";
-  if (fid) Sound.win(FORTUNE_BY_ID[fid].pays >= 25); else if (res.o > 0) Sound.win(false); else if (net < 0) Sound.lose(); else Sound.push();
+  if (jid || (fid && FORTUNE_BY_ID[fid].pays >= 25)) Sound.win(true);
+  else if (fid || aWon || res.o > 0) Sound.win(false); else if (net < 0) Sound.lose(); else Sound.push();
   status("");
   renderAll(); save();
 }
 function nextHand() {
   S.round = null;
-  // If the bankroll can no longer cover both bets, drop the Fortune Bonus first, then trim the main bet.
-  if (S.bet + S.fbet > S.session.rack) S.fbet = Math.max(0, Math.min(S.fbet, Math.floor(S.session.rack) - S.bet));
-  if (S.bet > S.session.rack) S.bet = Math.max(0, Math.floor(S.session.rack));
+  // If the bankroll can no longer cover every bet, drop the Jackpot, then the Ace-High bonus, then the Fortune Bonus, then trim the main bet.
+  const rack = Math.floor(S.session.rack);
+  if (pendingTotal() > rack) S.jp = false;
+  if (pendingTotal() > rack) S.abet = Math.max(0, rack - S.bet - S.fbet);
+  if (pendingTotal() > rack) S.fbet = Math.max(0, rack - S.bet);
+  if (S.bet > rack) S.bet = Math.max(0, rack);
   status(S.bet ? `Bet ${money(S.bet)}. Deal when you're ready.` : "Tap the bet circle to place a bet.");
   renderAll(); save();
 }
@@ -798,7 +862,7 @@ function mainAction() {
 }
 function addChip() {
   if (S.round) return;
-  if (S.bet + S.fbet + S.chip > S.session.rack) { status(`Not enough in your bankroll for another ${money(S.chip)} chip.`, "warn"); return; }
+  if (pendingTotal() + S.chip > S.session.rack) { status(`Not enough in your bankroll for another ${money(S.chip)} chip.`, "warn"); return; }
   S.bet += S.chip; status(`Bet ${money(S.bet)}.`); renderAll(); save();
 }
 
@@ -807,7 +871,7 @@ function renderLedger() {
   const s = S.session;
   const net = s.rack + atRisk() - s.buyIn, life = S.past.reduce((a, p) => a + p.net, 0) + net;
   $("stBank").textContent = money(s.rack);
-  $("stBet").textContent = money(S.round ? S.round.bet + (S.round.fbet || 0) : S.bet + S.fbet);
+  $("stBet").textContent = money(S.round ? roundTotal(S.round) : pendingTotal());
   $("stNet").textContent = signed(net); $("stNet").className = "v " + pnClass(net);
   $("stLife").textContent = signed(life); $("stLife").className = "v " + pnClass(life);
   $("stMin").textContent = money(s.tableMin);
@@ -884,40 +948,68 @@ function renderVerdict() {
   }
   v.className = "verdict " + cls;
   v.querySelector(".vh").textContent = head; v.querySelector(".vd").textContent = detail;
-  // Fortune Bonus line: what the seven cards hold while setting, and what it paid once the hand is over.
-  const vb = $("vb"); let fText = "", fCls = "";
-  if (r && r.fbet) {
-    const fid = r.phase === "done" ? r.result.fid : fortuneHand(r.player), f = fid && FORTUNE_BY_ID[fid];
-    if (r.phase === "done") { fText = f ? `Fortune Bonus: ${f.name.toLowerCase()} pays ${money(r.result.fNet)}` : `Fortune Bonus: no straight or better, ${money(r.fbet)} lost`; fCls = f ? "pos" : "neg"; }
-    else fText = f ? `Fortune Bonus: you hold ${f.name.toLowerCase()}, paying ${f.pays.toLocaleString("en-US")} to 1` : "Fortune Bonus: no straight or better in these seven cards";
-    if (r.phase === "done" && r.result.total !== r.result.net) fText += ` · hand total ${signed(r.result.total)}`;
+  // Side bet lines: what each side bet is headed for while you set your hand, and what it paid once the hand is over.
+  // Every side bet is already decided by the cards on the table, so the lines can say so before you set.
+  const lines = [];
+  if (r) {
+    const done = r.phase === "done", seven = (r.fbet || r.jp) ? (done ? null : fortuneHand(r.player)) : null;
+    if (r.fbet) {
+      const fid = done ? r.result.fid : seven, f = fid && FORTUNE_BY_ID[fid];
+      lines.push(done
+        ? [f ? `Fortune Bonus: ${f.name.toLowerCase()} pays ${money(r.result.fNet)}` : `Fortune Bonus: no straight or better, ${money(r.fbet)} lost`, f ? "pos" : "neg"]
+        : [f ? `Fortune Bonus: you hold ${f.name.toLowerCase()}, paying ${f.pays.toLocaleString("en-US")} to 1` : "Fortune Bonus: no straight or better in these seven cards", ""]);
+    }
+    if (r.abet) {
+      lines.push(done
+        ? [r.aceHigh ? `Ace-High bonus: dealer's ace-high pai gow pays ${money(r.result.aNet)}` : `Ace-High bonus: dealer has a made hand, ${money(r.abet)} lost`, r.aceHigh ? "pos" : "neg"]
+        : [r.aceHigh ? `Ace-High bonus: the dealer has ace-high pai gow, paying ${ACE_HIGH_PAYS} to 1` : "Ace-High bonus: the dealer has a made hand, so it loses", ""]);
+    }
+    if (r.jp) {
+      const jid = done ? r.result.jid : (seven && JACKPOT_BY_ID[seven] ? seven : null), j = jid && JACKPOT_BY_ID[jid];
+      lines.push(done
+        ? [j ? `Jackpot: ${j.name.toLowerCase()} pays ${money(r.result.jNet)}` : `Jackpot: no full house or better, ${money(JACKPOT_BET)} lost`, j ? "pos" : "neg"]
+        : [j ? `Jackpot: you hold ${j.name.toLowerCase()}, paying ${jackpotPays(j, S.meter)}` : "Jackpot: no full house or better in these seven cards", ""]);
+    }
+    if (done && r.result.total !== r.result.net) lines.push([`Hand total ${signed(r.result.total)}`, pnClass(r.result.total)]);
   }
-  vb.textContent = fText; vb.className = "vb" + (fCls ? " " + fCls : "");
+  $("vb").innerHTML = lines.map(([t, c]) => `<span class="${c}">${t}</span>`).join("");
   drawCircle($("circle"), S.round ? S.round.bet : S.bet, "Bet");
   drawCircle($("fcircle"), S.round ? (S.round.fbet || 0) : S.fbet, "Fortune");
+  drawCircle($("acircle"), S.round ? (S.round.abet || 0) : S.abet, "Ace-High");
+  drawCircle($("jcircle"), (S.round ? S.round.jp : S.jp) ? JACKPOT_BET : 0, "Jackpot $1");
+  $("meterAmt").textContent = money(S.meter);
 }
+// The main circle shows the bet's dollar amount under the chip. Side circles show their name there instead,
+// since the chip already shows the amount and the name tells the four circles apart.
 function drawCircle(c, amt, label) {
-  c.innerHTML = `<span class="lbl">${S.round || amt ? "" : label}</span>`;
-  if (amt) { c.appendChild(el("span", "chip chip-face " + denomClass(amt), shortAmt(amt))); c.appendChild(el("span", "amt", money(amt))); }
+  const side = c.id !== "circle";
+  c.innerHTML = `<span class="lbl">${amt || (S.round && !side) ? "" : label}</span>`;
+  if (amt) { c.appendChild(el("span", "chip chip-face " + denomClass(amt), shortAmt(amt))); c.appendChild(el("span", side ? "amt side" : "amt", side ? label : money(amt))); }
   c.disabled = !!S.round;
 }
 function renderFortune() {
   const r = S.round, fid = r ? (r.phase === "done" && r.result ? r.result.fid : fortuneHand(r.player)) : null;
   $("paytable").innerHTML = `<tbody>${FORTUNE.map(f => `<tr class="${f.id === fid ? "hit" : ""}"><td>${f.name}</td><td class="r">${f.pays.toLocaleString("en-US")} to 1</td></tr>`).join("")}</tbody>`;
   $("fortuneNow").textContent = !r ? "" : fid ? `This hand: ${FORTUNE_BY_ID[fid].name.toLowerCase()}` : "This hand: no paying hand";
+  // Jackpot paytable with today's dollar amounts for the meter shares.
+  const jid = r ? (r.phase === "done" && r.result ? r.result.jid : (JACKPOT_BY_ID[fid] ? fid : null)) : null;
+  $("jackTable").innerHTML = `<tbody>${JACKPOT.map(j => `<tr class="${j.id === jid ? "hit" : ""}"><td>${j.name}</td><td class="r">${jackpotPays(j, S.meter)}</td></tr>`).join("")}</tbody>`;
+  $("jackMeter").textContent = money(S.meter);
+  $("aceNow").textContent = !r ? "" : r.aceHigh ? "This hand: the dealer has ace-high pai gow" : "This hand: the dealer has a made hand";
 }
 function renderControls() {
   const r = S.round, label = !r ? "Deal" : r.phase === "set" ? (r.aceHigh ? "Show result" : "Set hand") : "Next hand";
   $("btnMain").textContent = label; $("mMain").textContent = label;
-  let ready = !r ? S.bet >= S.session.tableMin && S.bet + S.fbet <= S.session.rack : true;
+  let ready = !r ? S.bet >= S.session.tableMin && pendingTotal() <= S.session.rack : true;
   if (r && r.phase === "set" && !r.aceHigh) { const p = setOf(r.player, r.pLow); ready = !!(p.hk && p.lk && highBeatsLow(p.hk, p.lk)); }
   $("btnMain").disabled = !ready; $("mMain").disabled = !ready;
   const setting = !!(r && r.phase === "set" && !r.aceHigh);
-  $("btnHouse").disabled = !setting; $("btnBest").disabled = !setting; $("btnClear").disabled = !!r || !(S.bet + S.fbet);
+  $("btnHouse").disabled = !setting; $("btnBest").disabled = !setting; $("btnClear").disabled = !!r || !pendingTotal();
   $("btnSound").textContent = S.sound ? "Sound on" : "Sound off"; $("btnSound").setAttribute("aria-pressed", String(S.sound));
   $("showPreview").checked = S.preview;
   const s = S.session, net = s.rack + atRisk() - s.buyIn;
-  $("mCall").textContent = !r ? (S.bet ? `Bet ${money(S.bet)}${S.fbet ? ` + ${money(S.fbet)} Fortune` : ""}` : "Place your bet") : r.phase === "set" ? (r.aceHigh ? "Ace-high pai gow: push" : "Set your hand") : $("verdict").querySelector(".vh").textContent;
+  const side = pendingTotal() - S.bet;
+  $("mCall").textContent = !r ? (S.bet ? `Bet ${money(S.bet)}${side ? ` + ${money(side)} side bets` : ""}` : "Place your bet") : r.phase === "set" ? (r.aceHigh ? "Ace-high pai gow: push" : "Set your hand") : $("verdict").querySelector(".vh").textContent;
   $("mNet").innerHTML = `${money(s.rack)} · <span class="${pnClass(net)}">${signed(net)}</span>`;
 }
 function renderRack() {
@@ -952,7 +1044,9 @@ function renderSession() {
     ["Hands", n], ["Bought in", money(s.buyIn)],
     ["Won", w + pct(w)], ["Lost", l + pct(l)],
     ["Pushed", pu + pct(pu)], ["Ace-high pai gow pushes", ah],
-    ["Fortune Bonus hits", s.fBets ? `${s.fHits} of ${s.fBets} (${(s.fHits / s.fBets * 100).toFixed(0)}%)` : "2013"], ["Fortune Bonus net", s.fBets ? `<span class="${pnClass(s.fNet)}">${signed(s.fNet)}</span>` : "2013"],
+    ...[["Fortune Bonus", s.fBets, s.fHits, s.fNet], ["Ace-High bonus", s.aBets, s.aHits, s.aNet], ["Jackpot", s.jBets, s.jHits, s.jNet]].flatMap(([name, bets, hits, sideNet]) => [
+      [`${name} hits`, bets ? `${hits} of ${bets} (${(hits / bets * 100).toFixed(0)}%)` : "–"],
+      [`${name} net`, bets ? `<span class="${pnClass(sideNet)}">${signed(sideNet)}</span>` : "–"]]),
     ["Total wagered", money(s.wagered)], ["Biggest win", s.best ? `<span class="pos">${signed(s.best)}</span>` : "–"],
     ["Session high", `<span class="${pnClass(Math.max(...pts))}">${signed(Math.max(...pts))}</span>`], ["Actual result", `<span class="${pnClass(net)}">${signed(net)}</span>`]
   ];
@@ -963,7 +1057,9 @@ function renderHist() {
   if (!hs.length) { ol.innerHTML = `<li class="empty-note" style="background:none;display:block;padding:0">No hands yet this session.</li>`; return; }
   ol.innerHTML = hs.map(h => {
     const tag = h.o > 0 ? `<span class="badge w">WIN</span>` : h.o < 0 ? `<span class="badge l">LOSE</span>` : `<span class="badge c">PUSH</span>`;
-    const fort = h.fb ? ` · Fortune ${h.fid ? FORTUNE_BY_ID[h.fid].name.toLowerCase() + " " + signed(h.fn) : signed(h.fn)}` : "";
+    const fort = (h.fb ? ` · Fortune ${h.fid ? FORTUNE_BY_ID[h.fid].name.toLowerCase() + " " + signed(h.fn) : signed(h.fn)}` : "")
+      + (h.ab ? ` · Ace-High ${signed(h.an)}` : "")
+      + (h.jp ? ` · Jackpot ${h.jid ? JACKPOT_BY_ID[h.jid].name.toLowerCase() + " " + signed(h.jn) : signed(h.jn)}` : "");
     const what = (h.ah ? `Dealer ace-high pai gow · you <b>${h.ph}</b>` : `You <b>${h.ph}</b> / ${h.pl} · dealer ${h.dh} / ${h.dl}`) + fort;
     return `<li><span class="tag">${tag}</span><span class="what" title="${what.replace(/<[^>]+>/g, "")}">${what}</span><span class="amt ${pnClass(h.n)}">${h.n ? signed(h.n) : "–"}</span></li>`;
   }).join("");
@@ -1008,7 +1104,21 @@ $("btnMain").addEventListener("click", mainAction);
 $("mMain").addEventListener("click", mainAction);
 $("circle").addEventListener("click", addChip);
 $("circle").addEventListener("contextmenu", e => { e.preventDefault(); if (S.round || !S.bet) return; S.bet = Math.max(0, S.bet - S.chip); status(`Bet ${money(S.bet)}.`); renderAll(); save(); });
-$("btnClear").addEventListener("click", () => { if (S.round) return; S.bet = 0; S.fbet = 0; status("Bets cleared."); renderAll(); save(); });
+$("btnClear").addEventListener("click", () => { if (S.round) return; S.bet = 0; S.fbet = 0; S.abet = 0; S.jp = false; status("Bets cleared."); renderAll(); save(); });
+$("acircle").addEventListener("click", () => {
+  if (S.round) return;
+  if (pendingTotal() + S.chip > S.session.rack) { status(`Not enough in your bankroll for another ${money(S.chip)} chip.`, "warn"); return; }
+  S.abet += S.chip; status(`Ace-High bonus ${money(S.abet)}. It pays ${ACE_HIGH_PAYS} to 1 when the dealer has ace-high pai gow.`); renderAll(); save();
+});
+$("acircle").addEventListener("contextmenu", e => { e.preventDefault(); if (S.round || !S.abet) return; S.abet = Math.max(0, S.abet - S.chip); status(S.abet ? `Ace-High bonus ${money(S.abet)}.` : "Ace-High bonus taken down."); renderAll(); save(); });
+$("jcircle").addEventListener("click", () => {
+  if (S.round) return;
+  if (!S.jp && pendingTotal() + JACKPOT_BET > S.session.rack) { status("Not enough in your bankroll for the $1 Jackpot bet.", "warn"); return; }
+  S.jp = !S.jp;
+  status(S.jp ? `Jackpot on: $1 a hand, paying on a full house or better. The meter is at ${money(S.meter)}.` : "Jackpot off.");
+  renderAll(); save();
+});
+$("jcircle").addEventListener("contextmenu", e => { e.preventDefault(); if (S.round || !S.jp) return; S.jp = false; status("Jackpot off."); renderAll(); save(); });
 $("fcircle").addEventListener("click", () => {
   if (S.round) return;
   if (S.bet + S.fbet + S.chip > S.session.rack) { status(`Not enough in your bankroll for another ${money(S.chip)} chip.`, "warn"); return; }
@@ -1067,9 +1177,11 @@ load();
 $("brandCards").append(cardEl({r: 14, s: 0, id: "b1"}, "span"), cardEl({j: true, r: 14, s: -1, id: "b2"}, "span"));
 renderAll();
 if (S.round && S.round.phase === "set") status(S.round.aceHigh ? "" : "Your hand is where you left it. Set it when you're ready.");
-window.__paigow = {S, fortuneHand, eval5, eval2, houseWay, isAceHighPaiGow, bestPlay, outcome, settings, highBeatsLow, nameHigh, nameLow, setOf, cmp};
+window.__paigow = {S, JACKPOT, ACE_HIGH_PAYS, JACKPOT_SEED, fortuneHand, eval5, eval2, houseWay, isAceHighPaiGow, bestPlay, outcome, settings, highBeatsLow, nameHigh, nameLow, setOf, cmp};
 })();
 </script>
+
+
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js", {scope: "../"}).catch(() => {});
 </script>
