@@ -1,10 +1,11 @@
 # Casino Sims
 
-Three practice table games that run in the browser and install on an iPhone Home Screen:
+Four practice table games that run in the browser and install on an iPhone Home Screen:
 
 - **Double Zero Roulette** (`roulette/`): American wheel with 0 and 00.
 - **Hard Eight Craps** (`craps/`): standard US layout.
 - **Face Up Pai Gow** (`paigow/`): Pai Gow Poker with the dealer's hand face up.
+- **Soft Seventeen Blackjack** (`blackjack/`): one seat against the dealer with standard Strip rules.
 
 Everything is static HTML, so GitHub Pages can host it for free. Your bankroll and history are saved on each device in that browser's storage and never leave it.
 
@@ -20,8 +21,11 @@ craps/index.html         The craps game
 craps/manifest.webmanifest
 paigow/index.html        The pai gow game
 paigow/manifest.webmanifest
+blackjack/index.html     The blackjack game
+blackjack/manifest.webmanifest
 icons/                   App icons (180, 192 and 512 px)
 .nojekyll                Tells GitHub Pages to serve the files as they are
+.src/                    Game sources and the build script (kept locally, not published)
 ```
 
 ## Publish with GitHub Pages
@@ -75,9 +79,8 @@ Data you build up in the Home Screen app is separate from Safari tabs and from t
 
 ## Publishing an update
 
-1. Replace the changed files (for example `craps/index.html`).
-2. In `sw.js`, change `VERSION` (for example `casino-sims-v1` to `casino-sims-v2`) so phones drop the old copy.
-3. Commit and push:
+1. Edit the game's source in `.src/`, then run `bash .src/build-site.sh`. It rebuilds every game page and bumps the offline cache version. (`bash .src/build-site.sh --check` reports which pages would change without touching them.)
+2. Commit and push:
 
 ```bash
 git add .
