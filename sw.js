@@ -1,7 +1,7 @@
 // Offline support. Pages load from the cache instantly and refresh in the background,
 // so an update you push shows up the second time you open the app.
 // Change VERSION whenever you publish new files, so old caches are cleared.
-const VERSION = "casino-sims-v12";
+const VERSION = "casino-sims-v13";
 const FILES = [
   "./",
   "./index.html",
@@ -18,11 +18,15 @@ const FILES = [
   "./blackjack/",
   "./blackjack/index.html",
   "./blackjack/manifest.webmanifest",
+  "./videopoker/",
+  "./videopoker/index.html",
+  "./videopoker/manifest.webmanifest",
   "./icons/hub-180.png", "./icons/hub-192.png", "./icons/hub-512.png",
   "./icons/roulette-180.png", "./icons/roulette-192.png", "./icons/roulette-512.png",
   "./icons/craps-180.png", "./icons/craps-192.png", "./icons/craps-512.png",
   "./icons/paigow-180.png", "./icons/paigow-192.png", "./icons/paigow-512.png",
-  "./icons/blackjack-180.png", "./icons/blackjack-192.png", "./icons/blackjack-512.png"
+  "./icons/blackjack-180.png", "./icons/blackjack-192.png", "./icons/blackjack-512.png",
+  "./icons/videopoker-180.png", "./icons/videopoker-192.png", "./icons/videopoker-512.png"
 ];
 
 self.addEventListener("install", event => {

@@ -1,11 +1,12 @@
 # Casino Sims
 
-Four practice table games that run in the browser and install on an iPhone Home Screen:
+Five practice casino games that run in the browser and install on an iPhone Home Screen:
 
 - **Double Zero Roulette** (`roulette/`): American wheel with 0 and 00.
 - **Hard Eight Craps** (`craps/`): standard US layout.
 - **Face Up Pai Gow** (`paigow/`): Pai Gow Poker with the dealer's hand face up.
 - **Soft Seventeen Blackjack** (`blackjack/`): one seat against the dealer with standard Strip rules.
+- **Full Pay Video Poker** (`videopoker/`): single-hand Jacks or Better and Deuces Wild with best-hold hints.
 
 Everything is static HTML, so GitHub Pages can host it for free. Your bankroll and history are saved on each device in that browser's storage and never leave it.
 
@@ -23,6 +24,8 @@ paigow/index.html        The pai gow game
 paigow/manifest.webmanifest
 blackjack/index.html     The blackjack game
 blackjack/manifest.webmanifest
+videopoker/index.html    The video poker game
+videopoker/manifest.webmanifest
 icons/                   App icons (180, 192 and 512 px)
 .nojekyll                Tells GitHub Pages to serve the files as they are
 .src/                    Game sources and the build script (kept locally, not published)
