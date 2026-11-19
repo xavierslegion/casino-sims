@@ -17,8 +17,11 @@
 body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
 img{max-width:100%}
 [hidden]{display:none!important}
-.home-link{font:600 12px/1 "Barlow Semi Condensed","Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#a7bba9;text-decoration:none;padding:10px 4px}
-.home-link:hover,.home-link:focus-visible{color:#d6ae5a}
+.home-bar{display:flex;margin:0 0 12px}
+.home-link{display:inline-flex;align-items:center;gap:7px;font:600 12px/1 "Barlow Semi Condensed","Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  color:#f2ebd9;text-decoration:none;padding:9px 15px 9px 12px;border:1px solid rgba(242,235,217,.25);border-radius:999px;background:rgba(18,61,44,.85)}
+.home-link span{font-size:17px;line-height:0;margin-top:-2px}
+.home-link:hover,.home-link:focus-visible{border-color:#d6ae5a;color:#d6ae5a;outline:none}
 </style>
 <title>Full Pay Video Poker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -109,6 +112,28 @@ button{touch-action:manipulation}
 .paytable tr.dealt th,.paytable tr.dealt td{background:rgba(242,235,217,.08);color:var(--ink)}
 .paytable tr.dealt td.on{color:var(--brass)}
 .paytable tr.win th,.paytable tr.win td{background:var(--brass);color:var(--brass-ink)}
+.paytable .times{margin-left:8px;font-variant-numeric:tabular-nums}
+.mopts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.hsel{display:flex;align-items:center;gap:8px}
+.hlabel{font:600 12px/1 var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+#handSeg button{min-width:42px;padding:9px 10px}
+
+/* other hands in multi-hand play */
+.uppers{display:grid;grid-template-columns:repeat(var(--cols),max-content);justify-content:center;gap:8px 18px}
+.uppers.n2{--cols:1;--mw:44px} .uppers.n4{--cols:2;--mw:40px} .uppers.n9{--cols:3;--mw:32px}
+.uhand{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 7px 3px;border-radius:8px;border:1px solid transparent}
+.uhand.won{border-color:rgba(214,174,90,.7);background:rgba(214,174,90,.10)}
+.urow{display:flex;gap:3px}
+.mcard{width:var(--mw);height:calc(var(--mw) * 1.36);border-radius:calc(var(--mw) * .12);background:var(--card);color:var(--card-black);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 max(10px, calc(var(--mw) * .42))/1 var(--f-label);
+  box-shadow:0 1px 3px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.12)}
+.mcard .ms{font-size:max(9px, calc(var(--mw) * .36));margin-top:1px}
+.mcard.red{color:var(--card-red)}
+.mcard.w{box-shadow:inset 0 -3px 0 var(--brass), 0 1px 3px rgba(0,0,0,.35)}
+.mcard.back{background:repeating-linear-gradient(45deg, #7d1a24 0 4px, #8f2330 4px 8px);box-shadow:inset 0 0 0 2px var(--card), 0 1px 3px rgba(0,0,0,.35)}
+.ulabel{display:block;min-height:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:600 11px/15px var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--brass);font-variant-numeric:tabular-nums}
+.ulabel.main{text-align:center;margin-top:-6px}
 .paytable caption{caption-side:bottom;padding-top:6px;text-align:right;font:500 12px/1.3 var(--f-label);letter-spacing:.04em;color:var(--muted)}
 
 /* cards */
@@ -231,6 +256,13 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
   .machine{padding:12px 10px 14px;gap:12px;margin:9px 4px}
   .mtop{flex-direction:column;align-items:stretch}
   .seg{display:grid;grid-template-columns:1fr 1fr}
+  .mopts{flex-direction:column;align-items:stretch;gap:10px}
+  .hsel{justify-content:space-between}
+  #handSeg{display:grid;grid-template-columns:repeat(4,1fr);flex:1;max-width:240px}
+  .uppers{gap:6px 8px}
+  .uppers.n2{--mw:34px} .uppers.n4{--mw:min(27px, calc((100vw - 110px) / 10))} .uppers.n9{--mw:min(19px, calc((100vw - 92px) / 16));gap:4px 4px}
+  .uppers.n9 .urow{gap:1px} .uppers.n9 .uhand{padding:3px 2px 1px}
+  .ulabel{font-size:10px;letter-spacing:.02em}
   .ptsel{justify-content:space-between}
   .ptsel select{flex:1;min-width:0}
   .paytable th{font-size:11px;letter-spacing:.03em;padding:4px 6px;white-space:normal;line-height:1.15}
@@ -263,6 +295,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 <body>
 
 <div class="app">
+  <nav class="home-bar" aria-label="Casino Sims"><a class="home-link" href="../"><span aria-hidden="true">&lsaquo;</span>All games</a></nav>
   <header class="top">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true" id="brandCards"></span>
@@ -278,7 +311,6 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
       <div class="stat"><span class="k">All sessions</span><span class="v" id="stLife"></span></div>
       <div class="stat"><span class="k">Coin</span><span class="v" id="stCoin"></span></div>
     </div>
-    <a class="home-link" href="../">All games</a>
     <button class="btn ghost" id="btnNew" type="button">New session</button>
   </header>
 
@@ -286,10 +318,15 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
     <section class="machine" aria-label="Video poker machine">
       <div class="mtop">
         <div class="seg" id="gameSeg" role="radiogroup" aria-label="Game"></div>
-        <label class="ptsel" for="tableSel">Pay table <select id="tableSel"></select></label>
+        <div class="mopts">
+          <div class="hsel"><span class="hlabel" id="handsLabel">Hands</span><div class="seg" id="handSeg" role="radiogroup" aria-labelledby="handsLabel"></div></div>
+          <label class="ptsel" for="tableSel">Pay table <select id="tableSel"></select></label>
+        </div>
       </div>
-      <table class="paytable" id="paytable" aria-label="Pay table, in coins for each bet size"></table>
+      <table class="paytable" id="paytable" aria-label="Pay table, in coins per hand for each bet size"></table>
+      <div class="uppers" id="uppers" hidden></div>
       <div class="hand" id="cards"></div>
+      <span class="ulabel main" id="mainLabel" hidden></span>
       <div class="vline" id="verdict" aria-live="polite"><span class="vh"></span><span class="vd"></span></div>
       <div class="meterline"><span id="betLine"></span><span id="winLine"></span></div>
     </section>
@@ -304,7 +341,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
       <label class="toggle" for="soundOn"><input type="checkbox" id="soundOn"> Sound</label>
     </div>
     <p class="status" id="status" role="status"></p>
-    <p class="hint">Pick a coin value and bet 1 to 5 coins. The royal flush pays 4,000 coins only on a 5-coin bet. After the deal, tap the cards you want to keep, then draw. On a keyboard: Space or Enter deals and draws, 1 to 5 hold cards, B bets one more coin, M bets max and deals, and ? shows the best hold.</p>
+    <p class="hint">Pick a coin value, 1, 3, 5 or 10 hands, and bet 1 to 5 coins a hand. The royal flush pays 4,000 coins only on a 5-coin bet. After the deal, tap the cards you want to keep, then draw. On a keyboard: Space or Enter deals and draws, 1 to 5 hold cards, B bets one more coin, M bets max and deals, and ? shows the best hold.</p>
   </main>
 
   <section class="panels">
@@ -357,6 +394,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
             <li>You're dealt five cards. Hold any of them, then draw: each card you don't hold is replaced from the same deck.</li>
             <li>The final hand is paid from the pay table. Pays are in coins for the whole bet, so a 5-coin full house at 9 for 1 pays 45 coins.</li>
             <li>The royal flush pays 250 for 1 on 1 to 4 coins and 800 for 1 (4,000 coins) on 5. The returns below assume 5 coins.</li>
+            <li>With 3, 5 or 10 hands, you bet the same coins on every hand. The cards you hold are copied to each hand, and each hand draws its replacements from its own freshly shuffled deck, so the hands are paid separately. The best hold is the same however many hands you play.</li>
           </ul>
         </div>
         <div>
@@ -403,6 +441,7 @@ const SUIT_NAMES = ["spades", "hearts", "diamonds", "clubs"];
 const RANK_TXT = {11: "J", 12: "Q", 13: "K", 14: "A"};
 const ONE = {2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Jack", 12: "Queen", 13: "King", 14: "Ace"};
 const DENOMS = [1, 2, 5, 10, 25, 100];
+const HAND_COUNTS = [1, 3, 5, 10];
 const KEY = "full-pay-video-poker-v1";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -410,6 +449,7 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const GAMES = {
   job: {name: "Jacks or Better", short: "JoB", def: "9/6",
     hands: ["Royal Flush", "Straight Flush", "Four of a Kind", "Full House", "Flush", "Straight", "Three of a Kind", "Two Pair", "Jacks or Better"],
+    abbr: ["Royal", "Str flush", "Quads", "Full house", "Flush", "Straight", "Trips", "Two pair", "Jacks+"],
     tables: {
       "9/6": {label: "9/6 full pay", short: "9/6", pays: [250, 50, 25, 9, 6, 4, 3, 2, 1], ret: 99.54},
       "8/6": {label: "8/6", short: "8/6", pays: [250, 50, 25, 8, 6, 4, 3, 2, 1], ret: 98.39},
@@ -419,6 +459,7 @@ const GAMES = {
     }},
   dw: {name: "Deuces Wild", short: "DW", def: "full",
     hands: ["Natural Royal Flush", "Four Deuces", "Wild Royal Flush", "Five of a Kind", "Straight Flush", "Four of a Kind", "Full House", "Flush", "Straight", "Three of a Kind"],
+    abbr: ["Royal", "4 deuces", "Wild royal", "5 of a kind", "Str flush", "Quads", "Full house", "Flush", "Straight", "Trips"],
     tables: {
       full: {label: "Full pay", short: "full pay", pays: [250, 200, 25, 15, 9, 5, 3, 2, 2, 1], ret: 100.76},
       nsud: {label: "Not So Ugly Ducks", short: "NSUD", pays: [250, 200, 25, 16, 10, 4, 4, 3, 2, 1], ret: 99.73}
@@ -556,16 +597,17 @@ const keyLabel = k => { const [g, t] = k.split(":"); return GAMES[g] && GAMES[g]
 /* ---------- state ---------- */
 function makeSession(bank) {
   return {id: Date.now(), started: new Date().toISOString(), start: bank, buyIn: bank, rack: bank,
-    rounds: [], hands: 0, wagered: 0, paid: 0, wins: 0, best: null, freq: {}, keys: [],
+    rounds: [], hands: 0, deals: 0, wagered: 0, paid: 0, wins: 0, best: null, freq: {}, keys: [],
     graded: 0, holdOk: 0, evBest: 0, evUser: 0, evBet: 0, cost: 0};
 }
-const S = {session: makeSession(500), past: [], game: "job", tables: {job: "9/6", dw: "full"}, denom: 1, coins: 5, round: null, coach: true, sound: true};
-// round: {id, game, table, denom, coins, bet, cards: [5], deck: [5 replacement cards in order], held: [5], phase: "hold" | "done",
-//         ev: [32] | null, hint, mask, final, cat, win, graded, coachMsg}
+const S = {session: makeSession(500), past: [], game: "job", tables: {job: "9/6", dw: "full"}, denom: 1, coins: 5, hands: 1, round: null, coach: true, sound: true};
+// round: {id, game, table, denom, coins, n (hands), bet (all hands), cards: [5], deck: [5 replacement cards for the main hand],
+//         extra: [[5 replacement cards] for each other hand, each from its own shuffled deck], held: [5], phase: "hold" | "done",
+//         ev: [32] | null, hint, mask, final, finals: [[5]], cats: [per hand, main first], wins: [per hand], cat, win (total), graded, coachMsg}
 
 function save() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, game: S.game, tables: S.tables, denom: S.denom, coins: S.coins,
+    localStorage.setItem(KEY, JSON.stringify({session: S.session, past: S.past, game: S.game, tables: S.tables, denom: S.denom, coins: S.coins, hands: S.hands,
       round: S.round, coach: S.coach, sound: S.sound}));
   } catch (e) {}
 }
@@ -574,6 +616,8 @@ function load() {
     const d = JSON.parse(localStorage.getItem(KEY) || "null");
     if (!d || !d.session) return;
     S.session = Object.assign(makeSession(500), d.session);
+    if (d.session.deals == null) S.session.deals = S.session.hands;
+    if (HAND_COUNTS.includes(d.hands)) S.hands = d.hands;
     S.past = Array.isArray(d.past) ? d.past : [];
     if (GAMES[d.game]) S.game = d.game;
     if (d.tables) for (const g in GAMES) if (GAMES[g].tables[d.tables[g]]) S.tables[g] = d.tables[g];
@@ -668,14 +712,16 @@ function grade(r) {
   r.graded = true;
   const s = S.session, b = bestMask(r.ev), bev = r.ev[b], uev = r.ev[r.mask], ok = uev >= bev - 1e-9;
   s.graded++; if (ok) s.holdOk++;
-  s.evBest += bev * r.denom; s.evUser += uev * r.denom; s.evBet += r.bet; s.cost = r2(s.cost + (bev - uev) * r.denom);
+  // Every hand draws from its own full deck, so the best hold and its average pay are the same on each one.
+  const per = r.denom * (r.n || 1);
+  s.evBest += bev * per; s.evUser += uev * per; s.evBet += r.bet; s.cost = r2(s.cost + (bev - uev) * per);
   const last = s.rounds[s.rounds.length - 1];
   if (last && last.id === r.id) last.ok = ok;
-  if (!ok) r.coachMsg = `The best hold was ${holdText(r.cards, b)}, worth ${money(bev * r.denom)} on average. You held ${holdText(r.cards, r.mask)}, worth ${money(uev * r.denom)}.`;
+  if (!ok) r.coachMsg = `The best hold was ${holdText(r.cards, b)}, worth ${money(bev * per)} on average. You held ${holdText(r.cards, r.mask)}, worth ${money(uev * per)}.`;
 }
 
 /* ---------- play ---------- */
-let busy = false, drawing = false;
+let busy = false, drawing = false, upperShown = null; // upperShown: how many upper hands have been drawn so far, while drawing
 const backs = new Set(), anim = new Set();
 function status(msg, kind) { const s = $("status"); s.textContent = msg || ""; s.className = "status" + (kind ? " " + kind : ""); }
 const holding = () => !!(S.round && S.round.phase === "hold");
@@ -684,17 +730,23 @@ const inPlay = () => holding() ? S.round.bet : 0;
 async function deal(max) {
   if (busy || holding()) return;
   if (max) S.coins = 5;
-  const s = S.session, bet = S.coins * S.denom;
+  const s = S.session, n = S.hands, bet = S.coins * S.denom * n;
   if (bet > s.rack) {
     status(s.rack >= S.denom
-      ? `A ${S.coins}-coin bet is ${money(bet)}, more than your bankroll of ${money(s.rack)}. Bet fewer coins, pick a smaller coin or add chips.`
+      ? `A ${S.coins}-coin bet${n > 1 ? ` on ${n} hands` : ""} is ${money(bet)}, more than your bankroll of ${money(s.rack)}. Bet fewer coins${n > 1 ? " or hands" : ""}, pick a smaller coin or add chips.`
       : `Your bankroll of ${money(s.rack)} can't cover a ${money(S.denom)} coin. Pick a smaller coin or add chips.`, "warn");
     renderAll(); return;
   }
   s.rack -= bet;
-  const deck = shuffled();
-  const r = S.round = {id: Date.now(), game: S.game, table: S.tables[S.game], denom: S.denom, coins: S.coins, bet,
-    cards: deck.slice(0, 5), deck: deck.slice(5, 10), held: [false, false, false, false, false], phase: "hold", ev: null, hint: null};
+  const deck = shuffled(), unseen = deck.slice(5), extra = [];
+  // Each other hand gets its own deck: the 47 unseen cards, shuffled again independently.
+  for (let j = 1; j < n; j++) {
+    const p = unseen.slice();
+    for (let i = 0; i < 5; i++) { const k = i + randInt(p.length - i); [p[i], p[k]] = [p[k], p[i]]; }
+    extra.push(p.slice(0, 5));
+  }
+  const r = S.round = {id: Date.now(), game: S.game, table: S.tables[S.game], denom: S.denom, coins: S.coins, n, bet,
+    cards: deck.slice(0, 5), deck: deck.slice(5, 10), extra, held: [false, false, false, false, false], phase: "hold", ev: null, hint: null};
   wantHint = false; status(""); save();
   requestEV(r);
   busy = true;
@@ -709,47 +761,53 @@ function toggle(i) {
   const r = S.round;
   if (busy || !holding()) return;
   r.held[i] = !r.held[i];
-  Sound.hold(r.held[i]); renderCards(); save();
+  Sound.hold(r.held[i]); renderCards(); renderUppers(); save();
 }
 async function drawCards() {
   const r = S.round, s = S.session;
   if (busy || !holding()) return;
   r.mask = r.held.reduce((m, h, i) => h ? m | 1 << i : m, 0);
-  r.final = r.cards.slice();
-  const repl = [];
-  let k = 0;
-  for (let i = 0; i < 5; i++) if (!r.held[i]) { r.final[i] = r.deck[k++]; repl.push(i); }
-  r.cat = evalCodes(r.final, r.game);
-  r.win = r.cat >= 0 ? coinPay(r.game, r.table, r.coins, r.cat) * r.denom : 0;
+  r.n = r.n || 1; r.extra = r.extra || [];
+  // Held cards stay on every hand; each hand fills the rest from its own deck.
+  const fill = d => { const f = r.cards.slice(); let k = 0; for (let i = 0; i < 5; i++) if (!r.held[i]) f[i] = d[k++]; return f; };
+  const repl = [0, 1, 2, 3, 4].filter(i => !r.held[i]);
+  r.final = fill(r.deck);
+  r.finals = r.extra.map(fill);
+  r.cats = [r.final, ...r.finals].map(f => evalCodes(f, r.game));
+  r.wins = r.cats.map(c => c >= 0 ? coinPay(r.game, r.table, r.coins, c) * r.denom : 0);
+  r.cat = r.cats[0];
+  r.win = r.wins.reduce((a, b) => a + b, 0);
   r.phase = "done"; r.hint = null; wantHint = false;
   // Paid now, before the cards animate, so a reload mid-draw can't lose the result.
-  s.rack += r.win; s.hands++; s.wagered += r.bet; s.paid += r.win;
-  if (r.win > 0) { s.wins++; if (s.best == null || r.win > s.best) s.best = r.win; }
+  s.rack += r.win; s.hands += r.n; s.deals++; s.wagered += r.bet; s.paid += r.win;
+  s.wins += r.wins.filter(w => w > 0).length;
+  if (r.win > 0 && (s.best == null || r.win > s.best)) s.best = r.win;
   const key = tableKey(r.game, r.table);
   const f = s.freq[key] || (s.freq[key] = {n: 0, c: GAMES[r.game].hands.map(() => 0)});
-  f.n++; if (r.cat >= 0) f.c[r.cat]++;
+  f.n += r.n; r.cats.forEach(c => { if (c >= 0) f.c[c]++; });
   if (!s.keys.includes(key)) s.keys.push(key);
-  s.rounds.push({id: r.id, n: r.win - r.bet, p: s.rack - s.buyIn, k: key, f: r.final, m: r.mask, c: r.cat, ok: null});
+  s.rounds.push({id: r.id, n: r.win - r.bet, p: s.rack - s.buyIn, k: key, f: r.final, m: r.mask, c: r.cat, ok: null, h: r.n, cs: r.n > 1 ? r.cats : undefined});
   // Only the last 20 hands keep their cards; older ones keep what the chart needs.
   if (s.rounds.length > 20) { const j = s.rounds.length - 21, o = s.rounds[j]; if (o.f) s.rounds[j] = {n: o.n, p: o.p}; }
   grade(r);
   save();
-  busy = true; drawing = true; status("");
+  busy = true; drawing = true; upperShown = 0; status("");
   repl.forEach(i => backs.add(i));
   renderAll();
   if (repl.length) await wait(150);
-  for (const i of repl) { backs.delete(i); anim.add(i); renderCards(); anim.clear(); Sound.card(); await wait(100); }
-  busy = false; drawing = false;
+  for (const i of repl) { backs.delete(i); anim.add(i); renderCards(); anim.clear(); Sound.card(); await wait(r.n > 5 ? 60 : 100); }
+  for (let j = 0; j < r.finals.length; j++) { upperShown = j + 1; renderUppers(); if (repl.length) { Sound.card(); await wait(r.n > 5 ? 70 : 110); } }
+  busy = false; drawing = false; upperShown = null;
   renderAll();
   if (r.coachMsg && S.coach) status(r.coachMsg, "coach");
-  if (r.win > r.bet) Sound.win(GAMES[r.game].tables[r.table].pays[r.cat] >= 15);
+  if (r.win > r.bet) Sound.win(r.cats.some(c => c >= 0 && GAMES[r.game].tables[r.table].pays[c] >= 15));
   else if (r.win > 0) Sound.push();
 }
 function dealOrDraw() { if (holding()) drawCards(); else deal(false); }
 function betOne() {
   if (busy || holding()) return;
   S.coins = S.coins % 5 + 1;
-  Sound.coin(); status(`Bet ${S.coins} coin${S.coins > 1 ? "s" : ""}: ${money(S.coins * S.denom)}.`); renderAll(); save();
+  Sound.coin(); status(`Bet ${S.coins} coin${S.coins > 1 ? "s" : ""}${S.hands > 1 ? ` on each of ${S.hands} hands` : ""}: ${money(S.coins * S.denom * S.hands)}.`); renderAll(); save();
 }
 function showHint() {
   const r = S.round;
@@ -758,7 +816,7 @@ function showHint() {
   wantHint = false;
   const b = bestMask(r.ev);
   r.hint = b; renderCards();
-  status(`${b ? `Best hold: ${holdText(r.cards, b)}` : "Best play: hold nothing and draw five new cards"}. It returns ${money(r.ev[b] * r.denom)} on average for this ${money(r.bet)} bet.`, "coach");
+  status(`${b ? `Best hold: ${holdText(r.cards, b)}` : "Best play: hold nothing and draw five new cards"}. It returns ${money(r.ev[b] * r.denom * (r.n || 1))} on average for this ${money(r.bet)} bet.`, "coach");
   save();
 }
 function setGame(g) {
@@ -771,7 +829,13 @@ function setTable(t) {
 }
 function setDenom(v) {
   if (busy || holding()) { status("Change the coin value between hands.", "warn"); return; }
-  S.denom = v; Sound.coin(); status(`${money(v)} coins: ${S.coins} coin${S.coins > 1 ? "s" : ""} is ${money(S.coins * v)}.`); renderAll(); save();
+  S.denom = v; Sound.coin(); status(`${money(v)} coins: ${S.coins} coin${S.coins > 1 ? "s" : ""}${S.hands > 1 ? ` on ${S.hands} hands` : ""} is ${money(S.coins * v * S.hands)}.`); renderAll(); save();
+}
+function setHands(n) {
+  if (busy || holding() || n === S.hands || !HAND_COUNTS.includes(n)) return;
+  S.hands = n; S.round = null;
+  status(n > 1 ? `${n} hands: the cards you hold are copied to every hand. ${S.coins} coin${S.coins > 1 ? "s" : ""} a hand is ${money(S.coins * S.denom * n)} a deal.` : "One hand.");
+  renderAll(); save();
 }
 
 /* ---------- rendering ---------- */
@@ -792,7 +856,7 @@ function cardEl(code, opts = {}) {
 function renderLedger() {
   const s = S.session, net = s.rack + inPlay() - s.buyIn, life = r2(S.past.reduce((a, p) => a + p.net, 0) + net);
   $("stBank").textContent = money(s.rack);
-  $("stBet").textContent = money(holding() ? S.round.bet : S.coins * S.denom);
+  $("stBet").textContent = money(holding() ? S.round.bet : S.coins * S.denom * S.hands);
   $("stNet").textContent = signed(net); $("stNet").className = "v " + pnClass(net);
   $("stLife").textContent = signed(life); $("stLife").className = "v " + pnClass(life);
   $("stCoin").textContent = money(S.denom);
@@ -804,14 +868,19 @@ function renderSeg() {
   const G = GAMES[S.game], sel = $("tableSel");
   sel.innerHTML = Object.entries(G.tables).map(([k, t]) => `<option value="${k}"${k === S.tables[S.game] ? " selected" : ""}>${t.label} · ${t.ret.toFixed(2)}%</option>`).join("");
   sel.disabled = lock;
+  $("handSeg").innerHTML = HAND_COUNTS.map(n =>
+    `<button type="button" role="radio" data-n="${n}" aria-checked="${n === S.hands}" aria-label="${n} hand${n > 1 ? "s" : ""}"${lock ? " disabled" : ""}>${n}</button>`).join("");
 }
 function renderPaytable() {
   const r = S.round, g = S.game, t = S.tables[g], G = GAMES[g];
   const coins = holding() ? r.coins : S.coins;
-  const winRow = r && r.phase === "done" && !drawing ? r.cat : -1;
+  // How many hands hit each row on the last deal.
+  const hits = G.hands.map(() => 0);
+  if (r && r.phase === "done" && !drawing) (r.cats || [r.cat]).forEach(c => { if (c >= 0) hits[c]++; });
+  const multi = r && (r.n || 1) > 1;
   const dealtRow = holding() && !busy ? evalCodes(r.cards, r.game) : -1;
   $("paytable").innerHTML = `<tbody>${G.hands.map((name, c) =>
-    `<tr class="${c === winRow ? "win" : c === dealtRow ? "dealt" : ""}"><th scope="row">${name}</th>${[1, 2, 3, 4, 5].map(n =>
+    `<tr class="${hits[c] ? "win" : c === dealtRow ? "dealt" : ""}"><th scope="row">${name}${hits[c] && multi ? `<span class="times">×${hits[c]}</span>` : ""}</th>${[1, 2, 3, 4, 5].map(n =>
       `<td class="${n === coins ? "on" : ""}">${coinPay(g, t, n, c).toLocaleString("en-US")}</td>`).join("")}</tr>`).join("")}</tbody>`;
 }
 function renderCards() {
@@ -834,6 +903,33 @@ function renderCards() {
     spot.append(tag, b);
     box.appendChild(spot);
   }
+  // In multi-hand play the main hand gets the same result label as the hands above it.
+  const ml = $("mainLabel"), multi = r ? (r.n || 1) > 1 : S.hands > 1;
+  ml.hidden = !multi;
+  ml.textContent = multi && r && r.phase === "done" && !drawing && r.cat >= 0 ? `${GAMES[r.game].abbr[r.cat]} ${(r.wins[0] / r.denom).toLocaleString("en-US")}` : "";
+}
+function miniHTML(code, wild) {
+  if (code == null) return `<span class="mcard back"></span>`;
+  const r = rankOf(code), s = code & 3;
+  return `<span class="mcard${s === 1 || s === 2 ? " red" : ""}${wild && r === 2 ? " w" : ""}">${rt(r)}<span class="ms">${SUITS[s]}</span></span>`;
+}
+// The other hands, drawn above the main hand. Before the draw they show only the held cards.
+function renderUppers() {
+  const box = $("uppers"), r = S.round, n = r ? (r.n || 1) : S.hands;
+  box.hidden = n === 1;
+  if (n === 1) { box.innerHTML = ""; return; }
+  box.className = "uppers n" + (n - 1);
+  const g = r ? r.game : S.game, wild = g === "dw", G = GAMES[g];
+  let html = "";
+  for (let j = 0; j < n - 1; j++) {
+    const shown = r && r.phase === "done" && r.finals && (upperShown == null || j < upperShown);
+    const codes = [0, 1, 2, 3, 4].map(i => shown ? r.finals[j][i] : r && r.held[i] ? r.cards[i] : null);
+    const c = shown ? r.cats[j + 1] : -1;
+    const label = c >= 0 ? `${G.abbr[c]} ${(r.wins[j + 1] / r.denom).toLocaleString("en-US")}` : "";
+    const aria = `Hand ${j + 2}: ` + codes.map(x => x == null ? "face down" : shortCard(x)).join(", ") + (label ? `, ${G.hands[c]}` : "");
+    html += `<div class="uhand${c >= 0 ? " won" : ""}" role="group" aria-label="${aria}"><div class="urow" aria-hidden="true">${codes.map(x => miniHTML(x, wild)).join("")}</div><span class="ulabel">${label}</span></div>`;
+  }
+  box.innerHTML = html;
 }
 function renderVerdict() {
   const v = $("verdict"), r = S.round, G = GAMES[S.game];
@@ -841,12 +937,20 @@ function renderVerdict() {
   if (busy && holding()) { head = "Dealing"; cls = "dim"; }
   else if (drawing) { head = "Drawing"; cls = "dim"; }
   else if (!r) {
-    head = `Bet ${S.coins} coin${S.coins > 1 ? "s" : ""}`;
-    detail = `${money(S.coins * S.denom)} a hand. Deal when you're ready.` + (S.coins < 5 ? " The royal flush pays 4,000 coins only on 5 coins." : "");
+    head = `Bet ${S.coins} coin${S.coins > 1 ? "s" : ""}${S.hands > 1 ? ` × ${S.hands} hands` : ""}`;
+    detail = `${money(S.coins * S.denom * S.hands)} a deal. Deal when you're ready.` + (S.coins < 5 ? " The royal flush pays 4,000 coins only on 5 coins." : "");
   } else if (r.phase === "hold") {
     const dc = evalCodes(r.cards, r.game);
     head = "Pick cards to hold";
-    detail = (dc >= 0 ? `Dealt: ${G.hands[dc]}. ` : "") + "Tap the cards you want to keep, then draw.";
+    detail = (dc >= 0 ? `Dealt: ${G.hands[dc]}. ` : "") + ((r.n || 1) > 1 ? "Held cards are copied to every hand. Tap to hold, then draw." : "Tap the cards you want to keep, then draw.");
+  } else if ((r.n || 1) > 1) {
+    const won = r.wins.filter(w => w > 0).length;
+    if (won) {
+      head = `${won} of ${r.n} hands win`;
+      cls = r.win > r.bet ? "pos" : r.win === r.bet ? "push" : "";
+      const tally = G.hands.map((name, c) => [name, r.cats.filter(x => x === c).length]).filter(x => x[1]).map(([name, k]) => name + (k > 1 ? ` ×${k}` : ""));
+      detail = `${tally.join(", ")}. Pays ${(r.win / r.denom).toLocaleString("en-US")} coins: ${money(r.win)} on a ${money(r.bet)} bet.`;
+    } else { head = "No win"; cls = "dim"; detail = "Deal again when you're ready."; }
   } else if (r.cat >= 0) {
     head = G.hands[r.cat];
     cls = r.win > r.bet ? "pos" : "push";
@@ -854,8 +958,8 @@ function renderVerdict() {
   } else { head = "No win"; cls = "dim"; detail = "Deal again when you're ready."; }
   const vh = v.querySelector(".vh"); vh.textContent = head; vh.className = "vh " + cls;
   v.querySelector(".vd").textContent = detail;
-  const coins = holding() ? r.coins : S.coins, denom = holding() ? r.denom : S.denom;
-  $("betLine").innerHTML = `Bet <b>${coins} × ${money(denom)} = ${money(coins * denom)}</b>`;
+  const coins = holding() ? r.coins : S.coins, denom = holding() ? r.denom : S.denom, hn = holding() ? r.n || 1 : S.hands;
+  $("betLine").innerHTML = `Bet <b>${coins} × ${money(denom)}${hn > 1 ? ` × ${hn} hands` : ""} = ${money(coins * denom * hn)}</b>`;
   const win = r && r.phase === "done" && !drawing ? r.win : 0;
   $("winLine").innerHTML = `Win <b class="${win ? "pos" : ""}">${money(win)}</b>`;
 }
@@ -889,7 +993,8 @@ function renderSession() {
   }
   const net = s.rack + inPlay() - s.buyIn, hi = Math.max(...pts);
   const items = [
-    ["Hands", s.hands], ["Bought in", money(s.buyIn)],
+    ["Hands", s.hands], ["Deals", s.deals],
+    ["Bought in", money(s.buyIn)],
     ["Total wagered", money(s.wagered)], ["Paid back", money(s.paid)],
     ["Winning hands", s.hands ? `${s.wins} (${(s.wins / s.hands * 100).toFixed(0)}%)` : "–"], ["Actual return", pct(s.paid, s.wagered, 1)],
     ["Biggest pay", s.best ? `<span class="pos">${money(s.best)}</span>` : "–"], ["Session high", `<span class="${pnClass(hi)}">${signed(hi)}</span>`],
@@ -919,11 +1024,13 @@ function renderHist() {
   const ol = $("hist"), rs = S.session.rounds.filter(x => x.f).slice(-20).reverse();
   if (!rs.length) { ol.innerHTML = `<li class="empty-note" style="background:none;display:block;padding:0">No hands yet this session.</li>`; return; }
   ol.innerHTML = rs.map(x => {
-    const [g] = x.k.split(":"), G = GAMES[g];
-    const name = x.c >= 0 ? G.hands[x.c] : "No win";
+    const [g] = x.k.split(":"), G = GAMES[g], cats = x.cs || [x.c];
+    const top = cats.filter(c => c >= 0).reduce((a, c) => a < 0 || c < a ? c : a, -1); // best paying hand of the deal
+    const name = top >= 0 ? G.hands[top] : "No win";
     const cards = x.f.map((c, i) => x.m >> i & 1 ? `<b>${shortCard(c)}</b>` : shortCard(c)).join(" ");
-    const what = `${cards} · ${keyLabel(x.k)}${x.ok === false ? ` · <span class="miss">not the best hold</span>` : ""}`;
-    return `<li><span class="tag${x.c >= 0 ? " w" : ""}">${name}</span><span class="what" title="${what.replace(/<[^>]+>/g, "")}">${what}</span><span class="amt ${pnClass(x.n)}">${x.n ? signed(x.n) : "even"}</span></li>`;
+    const multi = x.h > 1 ? ` · ${x.h} hands, ${cats.filter(c => c >= 0).length} won` : "";
+    const what = `${cards}${multi} · ${keyLabel(x.k)}${x.ok === false ? ` · <span class="miss">not the best hold</span>` : ""}`;
+    return `<li><span class="tag${top >= 0 ? " w" : ""}">${name}</span><span class="what" title="${what.replace(/<[^>]+>/g, "")}">${what}</span><span class="amt ${pnClass(x.n)}">${x.n ? signed(x.n) : "even"}</span></li>`;
   }).join("");
 }
 function renderPast() {
@@ -953,7 +1060,7 @@ function renderRules() {
     `On the ${td.label} table five of a kind pays ${td.pays[3]}, a straight flush ${td.pays[4]} and four of a kind ${td.pays[5]}: ${td.ret.toFixed(2)}% with perfect play.`
   ].map(x => `<li>${x}</li>`).join("");
 }
-function renderAll() { renderLedger(); renderSeg(); renderPaytable(); renderCards(); renderVerdict(); renderActions(); renderRack(); renderSession(); renderPlay(); renderFreq(); renderHist(); renderPast(); renderRules(); }
+function renderAll() { renderLedger(); renderSeg(); renderPaytable(); renderUppers(); renderCards(); renderVerdict(); renderActions(); renderRack(); renderSession(); renderPlay(); renderFreq(); renderHist(); renderPast(); renderRules(); }
 
 /* ---------- sessions ---------- */
 function openNew() {
@@ -982,6 +1089,7 @@ $("actions").addEventListener("click", e => {
 $("cards").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b && !b.disabled) toggle(+b.dataset.i); });
 $("gameSeg").addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b && !b.disabled) setGame(b.dataset.g); });
 $("tableSel").addEventListener("change", e => setTable(e.target.value));
+$("handSeg").addEventListener("click", e => { const b = e.target.closest("[data-n]"); if (b && !b.disabled) setHands(+b.dataset.n); });
 $("chips").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b && !b.disabled) setDenom(+b.dataset.v); });
 document.addEventListener("keydown", e => {
   Sound.unlock();
@@ -1033,7 +1141,7 @@ if (holding()) {
   status("Your hand is where you left it.");
   if (!S.round.ev) requestEV(S.round);
 }
-window.__vp = {S, vpEval, vpAnalyze, GAMES, coinPay, paysFor, bestMask, evalCodes, deal, drawCards, toggle, showHint, setGame, setTable, requestEV,
+window.__vp = {S, vpEval, vpAnalyze, GAMES, coinPay, paysFor, bestMask, evalCodes, deal, drawCards, toggle, showHint, setGame, setTable, setHands, requestEV,
   get busy() { return busy; }, get workerFailed() { return workerFailed; }};
 })();
 </script>

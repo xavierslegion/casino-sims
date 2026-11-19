@@ -6,7 +6,7 @@ Five practice casino games that run in the browser and install on an iPhone Home
 - **Hard Eight Craps** (`craps/`): standard US layout.
 - **Face Up Pai Gow** (`paigow/`): Pai Gow Poker with the dealer's hand face up.
 - **Soft Seventeen Blackjack** (`blackjack/`): one seat against the dealer with standard Strip rules.
-- **Full Pay Video Poker** (`videopoker/`): single-hand Jacks or Better and Deuces Wild with best-hold hints.
+- **Full Pay Video Poker** (`videopoker/`): 1, 3, 5 or 10-hand Jacks or Better and Deuces Wild with best-hold hints.
 
 Everything is static HTML, so GitHub Pages can host it for free. Your bankroll and history are saved on each device in that browser's storage and never leave it.
 

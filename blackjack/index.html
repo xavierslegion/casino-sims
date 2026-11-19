@@ -17,8 +17,11 @@
 body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
 img{max-width:100%}
 [hidden]{display:none!important}
-.home-link{font:600 12px/1 "Barlow Semi Condensed","Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#a7bba9;text-decoration:none;padding:10px 4px}
-.home-link:hover,.home-link:focus-visible{color:#d6ae5a}
+.home-bar{display:flex;margin:0 0 12px}
+.home-link{display:inline-flex;align-items:center;gap:7px;font:600 12px/1 "Barlow Semi Condensed","Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  color:#f2ebd9;text-decoration:none;padding:9px 15px 9px 12px;border:1px solid rgba(242,235,217,.25);border-radius:999px;background:rgba(18,61,44,.85)}
+.home-link span{font-size:17px;line-height:0;margin-top:-2px}
+.home-link:hover,.home-link:focus-visible{border-color:#d6ae5a;color:#d6ae5a;outline:none}
 </style>
 <title>Soft Seventeen Blackjack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -251,6 +254,7 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
 <body>
 
 <div class="app">
+  <nav class="home-bar" aria-label="Casino Sims"><a class="home-link" href="../"><span aria-hidden="true">&lsaquo;</span>All games</a></nav>
   <header class="top">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true" id="brandCards"></span>
@@ -266,7 +270,6 @@ tfoot td{font-weight:600;border-bottom:0;border-top:1px solid var(--line)}
       <div class="stat"><span class="k">All sessions</span><span class="v" id="stLife"></span></div>
       <div class="stat"><span class="k">Table min</span><span class="v" id="stMin"></span></div>
     </div>
-    <a class="home-link" href="../">All games</a>
     <button class="btn ghost" id="btnNew" type="button">New session</button>
   </header>
 
